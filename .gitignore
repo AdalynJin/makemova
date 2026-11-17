@@ -25,8 +25,8 @@ android/
 .env*.local
 
 # Supabase local
-supabase/.branches
-supabase/.temp
+makemova/supabase/.branches
+makemova/supabase/.temp
 
 # debug
 npm-debug.*

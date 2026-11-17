@@ -6,6 +6,7 @@ When in doubt, ask.
 Makemova helps designers learning through real projects — career switchers, practicing designers and working designers — get critique on one design decision, compare directions, revise, and save the reasoning, without leaving the creative flow.
 
 ## Stack
+All code lives in `makemova/`. Paths below are relative to that folder.
 Expo SDK 58 + React Native 0.88 (React 19.3), TypeScript 6, Expo Router 58, NativeWind 4.2 (Tailwind 3.4), Supabase (Auth, Postgres, Storage) via supabase-js 2.119. Ask before substituting anything.
 - Screens: `/app` (Expo Router). Components: `/components`, one per file, named exactly as in Figma.
 - Supabase client and helpers: `/lib`. Migrations: `/supabase/migrations`.

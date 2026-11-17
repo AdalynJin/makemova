@@ -4,6 +4,8 @@ A guided design-learning app. A learner brings one screen, asks about one design
 
 Live: https://makemova.expo.app (desktop website)
 
+Code: [`makemova/`](makemova)
+
 ## How might we
 
 How might we create a more connected, project-based learning experience where designers can build confidence in their decisions and learn unfamiliar tools without leaving the creative flow?
