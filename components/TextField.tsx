@@ -11,7 +11,7 @@ type Props = {
   onChangeText?: (v: string) => void;
   placeholder?: string;
   helper?: string;
-  /** Shown instead of helper in the error state. Prefixed with "!". */
+  /** A validation message also puts the field in its error state unless a state is forced. */
   errorText?: string;
   requirement?: string;
   /** Force a state (dev screen). Otherwise derived from focus and value. */
@@ -41,7 +41,7 @@ export function TextField({
   multiline = true,
 }: Props) {
   const [focused, setFocused] = useState(false);
-  const s: TextFieldState = state ?? (focused ? 'focused' : value ? 'filled' : 'default');
+  const s: TextFieldState = state ?? (errorText ? 'error' : focused ? 'focused' : value ? 'filled' : 'default');
   const editable = s !== 'disabled' && s !== 'readOnly';
 
   return (
@@ -53,6 +53,8 @@ export function TextField({
         </Text>
       </View>
       <TextInput
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: s === 'disabled' }}
         className={`rounded-12 p-16 font-regular text-body text-ink ${multiline ? 'min-h-fieldMinHeight' : ''} ${surface[s]}`}
         style={{ textAlignVertical: 'top' }}
         value={value}
@@ -65,7 +67,7 @@ export function TextField({
         onBlur={() => setFocused(false)}
       />
       {s === 'error' && errorText ? (
-        <Text className="font-regular text-caption text-ink">! {errorText}</Text>
+        <Text accessibilityLiveRegion="polite" className="font-regular text-caption text-ink">! {errorText}</Text>
       ) : helper ? (
         <Text className="font-regular text-caption text-secondaryText">{helper}</Text>
       ) : null}

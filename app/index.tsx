@@ -17,12 +17,12 @@ export default function Home() {
   const { session } = useAuth();
   const scroll = useRef<{ scrollTo: (o: { y: number; animated: boolean }) => void } | null>(null);
   const offsets = useRef<Record<Section, number>>({ how: 0, example: 0, plans: 0 });
-  const mark = (id: Section) => (e: { nativeEvent: { layout: { y: number } } }) => {
+  const mark = (id: Section, e: { nativeEvent: { layout: { y: number } } }) => {
     offsets.current[id] = e.nativeEvent.layout.y;
   };
   const jump = (id: Section) => scroll.current?.scrollTo({ y: offsets.current[id], animated: true });
   const start = () => router.push(session ? '/projects' : '/create-account');
-  const example = () => router.push(session ? '/projects/example' : '/sign-in');
+  const example = () => router.push(session ? '/projects/example' : { pathname: '/sign-in', params: { project: 'example' } });
 
   return (
     <View className="flex-1 bg-white">
@@ -30,15 +30,15 @@ export default function Home() {
       <ScrollView ref={scroll as never} className="flex-1">
         <Hero onStart={start} onExample={example} />
         <ValueStrip />
-        <View onLayout={mark('how')}>
+        <View onLayout={(event) => mark('how', event)}>
           <HowItWorks />
         </View>
-        <View onLayout={mark('example')}>
+        <View onLayout={(event) => mark('example', event)}>
           <ExampleProject onExample={example} />
         </View>
         <CrewSection />
         <Tools />
-        <View onLayout={mark('plans')}>
+        <View onLayout={(event) => mark('plans', event)}>
           <Plans onStart={start} />
         </View>
         <Faq />

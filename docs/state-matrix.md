@@ -1,7 +1,8 @@
 # State matrix
 
 Source of truth for component states. Mirrors the Week 8 Figma page
-"Makemova / Geometric crew → 4. Components". If code and this file disagree, fix one of them on purpose.
+[Makemova / Geometric crew → 4. Components](https://www.figma.com/design/UuEYecRg6qlABoTEfxn2Qk/AI-Studio--Team-6?node-id=10414-1438).
+If code and this file disagree, fix one of them on purpose.
 
 | Component | Prop | Values |
 |---|---|---|

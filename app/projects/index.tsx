@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { Redirect, router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { AppNav } from '@/components/AppNav';
@@ -24,23 +24,27 @@ function edited(iso: string) {
 /** Figma: Flow A · My projects (10551:5427) and first visit (10551:5656) */
 export default function Projects() {
   const { session, loading } = useAuth();
+  const userId = session?.user.id;
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [query, setQuery] = useState('');
-
-  const fetchProjects = useCallback(async () => {
-    setLoad({ status: 'loading' });
-    // RLS returns only the signed-in designer's own projects.
-    const { data, error } = await supabase
-      .from('projects')
-      .select('id, owner_id, title, status, skill_focus, created_at')
-      .order('created_at', { ascending: false });
-    if (error) setLoad({ status: 'error', message: error.message });
-    else setLoad({ status: 'ready', projects: data ?? [] });
-  }, []);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (session) fetchProjects();
-  }, [session, fetchProjects]);
+    if (!userId) return;
+    let active = true;
+    // RLS returns only the signed-in designer's own projects.
+    void supabase
+      .from('projects')
+      .select('id, owner_id, title, status, skill_focus, created_at')
+      .eq('owner_id', userId)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) setLoad({ status: 'error', message: error.message });
+        else setLoad({ status: 'ready', projects: data ?? [] });
+      });
+    return () => { active = false; };
+  }, [attempt, userId]);
 
   const shown = useMemo(() => {
     if (load.status !== 'ready') return [];
@@ -80,7 +84,10 @@ export default function Projects() {
           <View className="w-column gap-12 rounded-12 border border-border bg-white p-20" style={softShadow}>
             <Text className="font-semibold text-cardTitle text-ink">Projects could not load</Text>
             <Text className="font-regular text-bodyUi text-secondaryText">{load.message}</Text>
-            <Button label="Try again" variant="white" size="sm" onPress={fetchProjects} />
+            <Button label="Try again" variant="white" size="sm" onPress={() => {
+              setLoad({ status: 'loading' });
+              setAttempt((value) => value + 1);
+            }} />
           </View>
         )}
 
