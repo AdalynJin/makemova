@@ -1,16 +1,23 @@
 -- Demo data from our Week 4–8 content: the Kiln studio and café projects,
 -- and our personas Lena (career switcher) and Theo (design student).
 --
--- Before running: in Supabase → Authentication → Users → Add user, create
---   lena.demo@makemova.test   and   theo.demo@makemova.test
--- (any password, tick "Auto confirm"). Then run this file in the SQL editor.
+-- Local fixture accounts use reserved .test addresses and have no password.
+-- The signup trigger also creates their profiles on a fresh database.
+insert into auth.users (
+  id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at, confirmation_token, recovery_token, email_change, email_change_token_new
+)
+select gen_random_uuid(), 'authenticated', 'authenticated', fixture.email, now(),
+  '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, now(), now(), '', '', '', ''
+from (values ('lena.demo@makemova.test'), ('theo.demo@makemova.test')) as fixture(email)
+where not exists (select 1 from auth.users where auth.users.email = fixture.email);
 
 do $$
 declare
   lena uuid := (select id from auth.users where email = 'lena.demo@makemova.test');
   theo uuid := (select id from auth.users where email = 'theo.demo@makemova.test');
-  kiln uuid := gen_random_uuid();
-  cafe uuid := gen_random_uuid();
+  kiln uuid := 'f49b9b95-3ba3-49f3-841b-62ca41fef301';
+  cafe uuid := 'f49b9b95-3ba3-49f3-841b-62ca41fef302';
   kiln_v1 uuid := gen_random_uuid();
   kiln_v2 uuid := gen_random_uuid();
   cafe_v1 uuid := gen_random_uuid();
@@ -18,8 +25,14 @@ declare
   cafe_crit uuid := gen_random_uuid();
 begin
   if lena is null or theo is null then
-    raise exception 'Create the two demo users in Authentication first.';
+    raise exception 'The seed could not resolve its fixture accounts.';
   end if;
+  -- A repeated seed should leave existing demo projects and user changes alone.
+  if exists (select 1 from public.projects where id in (kiln, cafe)) then
+    return;
+  end if;
+
+  insert into public.profiles (id) values (lena), (theo) on conflict (id) do nothing;
 
   update public.profiles set display_name = 'Lena Park', segment = 'career_switcher',
     consent_status = 'granted', consented_at = now() - interval '9 days' where id = lena;
