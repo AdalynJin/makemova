@@ -1,4 +1,4 @@
-import '../global.css';
+import '@/lib/global.css';
 
 import {
   DMSans_400Regular,
