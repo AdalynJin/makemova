@@ -48,6 +48,7 @@ export const role = {
 
 export const fontFamily = {
   regular: 'DMSans_400Regular',
+  medium: 'DMSans_500Medium',
   bold: 'DMSans_700Bold',
 } as const;
 
@@ -59,6 +60,7 @@ export const type = {
   label: { size: 18, lineHeight: 24, weight: 'bold' },
   action: { size: 15, lineHeight: 20, weight: 'bold' },
   body: { size: 16, lineHeight: 24, weight: 'regular' },
+  step: { size: 14, lineHeight: 18, weight: 'medium' }, // learning path stages
   caption: { size: 13, lineHeight: 18, weight: 'regular' },
   small: { size: 12, lineHeight: 16, weight: 'bold' },
 } as const;
@@ -85,10 +87,25 @@ export const radius = {
   pill: 100, // all buttons
 } as const;
 
+/** Fixed component sizes in px, from the Week 8 components. */
+export const size = {
+  fieldMinHeight: 120, // text field surface
+  statusMark: 32, // status notice mark
+  noteMark: 40, // feedback note mark
+  stepNumber: 24, // learning path number
+  dot: 12, // mark inner dot
+  progress: 4, // upload progress track
+  connector: 16, // learning path connector length
+  connectorThickness: 2,
+  sticker: 56, // crew sticker in upload (width)
+  stickerHeight: 46,
+} as const;
+
 export const border = {
   resting: 1, // empty inputs, unselected choices
   focus: 2, // the field you are typing in
+  dash: 1.5, // drop zones, drafts, locked steps (dashed)
 } as const;
 
-export const tokens = { color, role, fontFamily, type, space, radius, border };
+export const tokens = { color, role, fontFamily, type, space, radius, size, border };
 export default tokens;
