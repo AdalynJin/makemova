@@ -1,4 +1,4 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -7,17 +7,20 @@ import { AuthField } from '@/components/AuthField';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/lib/auth';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import { exampleDestination } from '@/lib/workspace-rules';
 
 /** Figma: Flow A · Sign in (10551:5196) */
 export default function SignIn() {
   const { session } = useAuth();
+  const { project } = useLocalSearchParams<{ project?: string }>();
+  const destination = exampleDestination(project);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  if (session) return <Redirect href="/projects" />;
+  if (session) return <Redirect href={destination} />;
 
   async function submit() {
     setError(null);
@@ -30,7 +33,7 @@ export default function SignIn() {
     const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
     if (authError) setError(authError.message);
-    else router.replace('/projects');
+    else router.replace(destination);
   }
 
   async function forgot() {
@@ -51,7 +54,9 @@ export default function SignIn() {
       footer={
         <>
           <Text className="font-regular text-bodySmall text-secondaryText">New here?</Text>
-          <Pressable accessibilityRole="link" onPress={() => router.push('/create-account')}>
+          <Pressable accessibilityRole="link" onPress={() => router.push(destination === '/projects/example'
+            ? { pathname: '/create-account', params: { project: 'example' } }
+            : '/create-account')}>
             <Text className="font-medium text-labelSmall text-ink">Create an account</Text>
           </Pressable>
         </>

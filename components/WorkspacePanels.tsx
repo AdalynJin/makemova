@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/Button';
@@ -64,12 +64,22 @@ const tools = [
 ] as const;
 
 /** Figma: CH03 · Make — R7 Tools (MOVA tool cards). */
-export function MakePanel({ onTool }: { onTool: (name: string) => void }) {
+export type WorkspaceTool = 'Critique' | 'Compare' | 'Tutorials' | 'Guidelines';
+
+export function MakePanel({
+  confirmation,
+  critiqueMeta,
+  onTool,
+}: {
+  confirmation?: ReactNode;
+  critiqueMeta?: string;
+  onTool: (name: WorkspaceTool) => void;
+}) {
   return (
     <View className="gap-16 rounded-24 border border-border bg-white p-24" style={cardShadow}>
       <View className="flex-row items-center justify-between">
         <Text className="font-semibold text-cardTitle text-ink">Tools</Text>
-        <Button label="Guidelines" variant="quiet" size="sm" />
+        <Button label="Guidelines" variant="quiet" size="sm" onPress={() => onTool('Guidelines')} />
       </View>
       <View className="gap-12">
         {tools.map((t) => (
@@ -81,7 +91,7 @@ export function MakePanel({ onTool }: { onTool: (name: string) => void }) {
           >
             <Text className="font-bold text-toolTitle text-ink">{t.name}</Text>
             <Text className="font-regular text-labelSmall text-ink">{t.intro}</Text>
-            <Text className="font-bold text-meta text-ink">{t.meta}</Text>
+            <Text className="font-bold text-meta text-ink">{t.name === 'Critique' ? critiqueMeta ?? t.meta : t.meta}</Text>
             <Image
               source={t.edge}
               style={{ position: 'absolute', right: 0, top: 0, width: size.toolEdge, height: size.toolCardHeight }}
@@ -90,6 +100,7 @@ export function MakePanel({ onTool }: { onTool: (name: string) => void }) {
           </Pressable>
         ))}
       </View>
+      {confirmation}
     </View>
   );
 }
@@ -98,16 +109,32 @@ const risks = ['The menu could be harder to find', 'Two dark buttons would compe
 
 /** Figma: CH03 · Explain your choice (incomplete → complete). */
 export function ExplainPanel({
+  example,
+  goalFit,
+  evidence,
   tradeOff,
+  onGoalFit,
+  onEvidence,
   onTradeOff,
   onBack,
+  onSave,
+  saving,
+  saved,
 }: {
-  tradeOff: string | null;
+  example: boolean;
+  goalFit: string;
+  evidence: string;
+  tradeOff: string;
+  onGoalFit: (value: string) => void;
+  onEvidence: (value: string) => void;
   onTradeOff: (r: string) => void;
   onBack: () => void;
+  onSave: () => void;
+  saving: boolean;
+  saved: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const done = tradeOff ? 3 : 2;
+  const done = [goalFit, evidence, tradeOff].filter((answer) => answer.trim()).length;
   return (
     <View className={surface} style={cardShadow}>
       <Pressable accessibilityRole="link" onPress={onBack} className="flex-row items-center gap-6 self-start">
@@ -118,7 +145,7 @@ export function ExplainPanel({
       <View className="gap-8">
         <View className="flex-row justify-between">
           <Text className="font-medium text-meta text-ink">{done} of 3 done</Text>
-          <Text className="font-regular text-meta text-secondaryText">{tradeOff ? 'Ready to save' : 'Trade-off missing'}</Text>
+          <Text className="font-regular text-meta text-secondaryText">{done === 3 ? 'Ready to save' : 'Add your reasoning'}</Text>
         </View>
         <View className="flex-row gap-4">
           {[0, 1, 2].map((i) => (
@@ -126,23 +153,19 @@ export function ExplainPanel({
           ))}
         </View>
       </View>
-      {[
-        ['Goal fit', 'Pickup is the first thing students see.'],
-        ['Visible evidence', 'Only “Order pickup” is a filled button.'],
-      ].map(([label, answer], i) => (
+      {([
+        ['Goal fit', goalFit, onGoalFit],
+        ['Visible evidence', evidence, onEvidence],
+      ] as const).map(([label, answer, change], i) => (
         <View key={label} className="gap-8">
           <Numbered n={i + 1} label={label} />
-          <View className="min-h-control flex-row items-center gap-12 rounded-10 border-dash border-ink px-12">
-            <View className="h-radioOuter w-radioOuter items-center justify-center rounded-pill border-focus border-ink">
-              <View className="h-radioInner w-radioInner rounded-pill bg-ink" />
-            </View>
-            <Text className="font-medium text-labelUi text-ink">{answer}</Text>
-          </View>
+          <TextInput accessibilityLabel={label} value={answer} onChangeText={change}
+            className="min-h-control rounded-10 border border-border px-12 font-regular text-labelUi text-ink" />
         </View>
       ))}
       <View className="gap-8">
         <Numbered n={3} label="Trade-off" />
-        <Pressable
+        {example ? <Pressable
           accessibilityRole="button"
           onPress={() => setOpen(!open)}
           className={`min-h-control flex-row items-center justify-between rounded-10 px-12 ${
@@ -150,11 +173,13 @@ export function ExplainPanel({
           }`}
         >
           <Text className={tradeOff ? 'font-medium text-labelUi text-ink' : 'font-regular text-labelUi text-secondaryText'}>
-            {tradeOff ?? 'Choose a risk you will check'}
+            {tradeOff || 'Choose a risk you will check'}
           </Text>
           <Icon name="chevronDown" />
-        </Pressable>
-        {open && (
+        </Pressable> : <TextInput accessibilityLabel="Trade-off" value={tradeOff} onChangeText={onTradeOff}
+          placeholder="What will you check next?"
+          className="min-h-control rounded-10 border border-border px-12 font-regular text-labelUi text-ink" />}
+        {example && open && (
           <View className="overflow-hidden rounded-10 border border-border bg-white">
             {risks.map((r) => (
               <Pressable
@@ -172,12 +197,12 @@ export function ExplainPanel({
           </View>
         )}
       </View>
-      <Button label="Decision tips" variant="quiet" size="sm" />
+      <Button label="Save choice" size="sm" disabled={done !== 3 || saved} busy={saving} onPress={onSave} />
       <View className="border-t border-border" />
       <View className="flex-row items-center gap-6">
         <Icon name="helpSmall" />
         <Text className="font-regular text-labelSmall text-secondaryText">
-          {tradeOff ? 'Saved with your choice · free' : 'Add a trade-off to save · free'}
+          {saved ? 'Saved with your choice · free' : 'Saving your choice is free'}
         </Text>
       </View>
     </View>
@@ -185,15 +210,22 @@ export function ExplainPanel({
 }
 
 /** Figma: CH04 · Revise one thing. */
-export function RevisePanel() {
-  const [note, setNote] = useState(
-    'Pickup stays filled. Menu is now an outlined button so it is easier to find.',
-  );
+export function RevisePanel({
+  note, onNote, example, version, upload,
+}: {
+  note: string;
+  onNote: (value: string) => void;
+  example: boolean;
+  version: number | null;
+  upload?: ReactNode;
+}) {
   return (
     <View className={surface} style={cardShadow}>
       <View className="gap-6 pr-64">
         <Text className="font-bold text-heading text-ink">Revise one thing</Text>
-        <Text className="font-regular text-labelUi text-secondaryText">Keep pickup strong and make the menu easier to find.</Text>
+        <Text className="font-regular text-labelUi text-secondaryText">
+          {example ? 'Keep pickup strong and make the menu easier to find.' : 'Make one change that supports your goal.'}
+        </Text>
         <Image
           source={asset.motionRevise}
           style={{ position: 'absolute', right: -space[8], top: -space[8], width: size.motionRevise, height: size.motionReviseHeight }}
@@ -201,7 +233,7 @@ export function RevisePanel() {
       </View>
       <View className="flex-row items-center gap-10">
         <Caps>STARTING VERSION</Caps>
-        <Text className="font-semibold text-labelUi text-ink">v2 · Current</Text>
+        <Text className="font-semibold text-labelUi text-ink">{version ? `Version ${version}` : 'No version yet'}</Text>
       </View>
       <View className="gap-8">
         <Numbered n={1} label="Edit source" />
@@ -211,21 +243,22 @@ export function RevisePanel() {
       </View>
       <View className="gap-8">
         <Numbered n={2} label="Upload revision" />
-        <View className="flex-row items-center gap-12 rounded-10 bg-paper p-12">
+        {example ? <View className="flex-row items-center gap-12 rounded-10 bg-paper p-12">
           <View className="h-fileIcon w-fileIcon rounded-6 bg-border" />
           <View className="flex-1">
             <Text className="font-medium text-labelSmall text-ink">cafe-revision.png</Text>
             <Text className="font-regular text-meta text-secondaryText">PNG · 1.2 MB</Text>
           </View>
           <Text className="font-medium text-meta text-secondaryText">Replace</Text>
-        </View>
+        </View> : upload}
       </View>
       <View className="gap-8">
         <Numbered n={3} label="Note the change" />
         <TextInput
           multiline
           value={note}
-          onChangeText={setNote}
+          onChangeText={onNote}
+          accessibilityLabel="Note the change"
           placeholderTextColor={color.secondaryText}
           className="min-h-control rounded-12 border border-secondaryText px-12 py-10 font-regular text-labelUi text-ink"
           style={{ outlineStyle: 'none' } as never}
@@ -244,10 +277,15 @@ export function RevisePanel() {
 }
 
 /** Figma: CH05 · Reflect — Keep one useful lesson. */
-export function ReflectPanel({ onBack, onFinish }: { onBack: () => void; onFinish: () => void }) {
-  const [lesson, setLesson] = useState(
-    'Give one action the most contrast; make the second one quieter, not hidden.',
-  );
+export function ReflectPanel({
+  lesson, onLesson, onBack, onFinish, saving,
+}: {
+  lesson: string;
+  onLesson: (value: string) => void;
+  onBack: () => void;
+  onFinish: () => void;
+  saving: boolean;
+}) {
   return (
     <View>
       <Image
@@ -268,7 +306,8 @@ export function ReflectPanel({ onBack, onFinish }: { onBack: () => void; onFinis
           <TextInput
             multiline
             value={lesson}
-            onChangeText={setLesson}
+            onChangeText={onLesson}
+            accessibilityLabel="What will you carry forward?"
             className="min-h-control rounded-12 border border-secondaryText px-12 py-10 font-regular text-labelUi text-ink"
             style={{ outlineStyle: 'none' } as never}
           />
@@ -276,10 +315,7 @@ export function ReflectPanel({ onBack, onFinish }: { onBack: () => void; onFinis
         <Button label="Open crit notes" variant="quiet" size="sm" />
         <View className="border-t border-border" />
         <Button label="Back to workspace" variant="quiet" size="sm" onPress={onBack} />
-        <Pressable accessibilityRole="link" onPress={onFinish} className="flex-row items-center gap-6">
-          <Icon name="arrowLeft" size={size.iconXs} />
-          <Text className="font-regular text-labelSmall text-secondaryText">Finish returns to My projects</Text>
-        </Pressable>
+        <Button label="Save and finish" variant="white" size="sm" busy={saving} onPress={onFinish} />
       </View>
     </View>
   );
