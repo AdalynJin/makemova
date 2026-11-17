@@ -1,4 +1,4 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+This is an Expo/React Native app that ships as a desktop website (makemova.expo.app). Design and test for the desktop browser first. CLAUDE.md holds the project rules.
 
 ## Expo has changed — do not trust your training data
 
