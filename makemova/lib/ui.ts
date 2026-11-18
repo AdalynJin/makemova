@@ -1,4 +1,4 @@
-import { color, shadow } from '@/tokens';
+import { color, opacity, shadow } from '@/tokens';
 
 /** Hex + alpha → rgba(), so shadows stay built from tokens. */
 export function alpha(hex: string, a: number) {
@@ -17,6 +17,11 @@ export const previewShadow = {
 export const softShadow = {
   boxShadow: `0px ${shadow.soft.offsetY}px ${shadow.soft.blur}px ${alpha(color.shadow, shadow.soft.opacity)}`,
 };
+/** R4 dialog shadow (two layers) and the 32% ink scrim behind it. */
+export const dialogShadow = {
+  boxShadow: `0px ${shadow.dialog.offsetY}px ${shadow.dialog.blur}px ${shadow.dialog.spread}px ${alpha(color.dialogShadow, shadow.dialog.opacity)}, 0px ${shadow.dialog.nearOffsetY}px ${shadow.dialog.nearBlur}px ${alpha(color.dialogShadow, shadow.dialog.nearOpacity)}`,
+};
+export const scrim = { backgroundColor: alpha(color.ink, opacity.scrim) };
 
 /** Every static Figma export the screens use. */
 export const asset = {
@@ -75,4 +80,8 @@ export const asset = {
   iconCheckSmall: require('@/assets/figma/icon-check-small.svg'),
   iconEdit: require('@/assets/figma/icon-edit.svg'),
   iconFinish: require('@/assets/figma/icon-finish.svg'),
+  iconUpload: require('@/assets/figma/icon-upload.svg'),
+  iconX: require('@/assets/figma/icon-x.svg'),
+  iconImage: require('@/assets/figma/icon-image.svg'),
+  motionBrief: require('@/assets/figma/motion-brief.svg'),
 } as const;

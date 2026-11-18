@@ -41,6 +41,7 @@ export const color = {
   tutorialIcon: '#FFE3C7',
   shadow: '#121318', // card shadow colour (used at low opacity)
   previewShadow: '#14171A', // Refined homepage workspace preview shadow (used at low opacity)
+  dialogShadow: '#000000', // R4 dialog shadow (used at low opacity)
 } as const;
 
 /** Semantic roles. Use these in components. */
@@ -338,6 +339,15 @@ export const size = {
   pathTriangle: 13.76, // Make / Revise triangles, 16 wide
   pathArrow: 15.6,
   pathArrowHeight: 12.8,
+  // Flow B · CH01 · Bring existing work (11125:41492) and its dialogs
+  dialog: 560, // R4 · Dialog · Review screen (11125:60453), R6 · Upload tips (11125:60036)
+  dialogClose: 32,
+  reviewPreviewHeight: 350, // Review screen · Preview (11125:60456)
+  fileThumb: 36, // R4/File chip · Thumb
+  motionBrief: 99, // MOVA · Motion · brief, Frame=01 (11125:62759), exported with its flag
+  motionBriefHeight: 89,
+  motionBriefLeft: 25.79, // from the dialog's left edge
+  motionBriefTop: -67, // feet rest on the dialog
 } as const;
 
 /**
@@ -358,6 +368,7 @@ export const opacity = {
   patternWelcome: 0.05,
   patternAccount: 0.125,
   patternProjects: 0.062,
+  scrim: 0.32, // dialog page backdrop, ink at 32%
 } as const;
 
 export const border = {
@@ -372,6 +383,8 @@ export const shadow = {
   card: { offsetY: 8, blur: 24, opacity: 0.14 },
   preview: { offsetY: 24, blur: 48, opacity: 0.14 }, // Refined homepage workspace preview
   soft: { offsetY: 4, blur: 12, opacity: 0.08 },
+  // R4 dialogs: 0 16 48 −8 at 12% and 0 2 6 at 6%, black
+  dialog: { offsetY: 16, blur: 48, spread: -8, opacity: 0.12, nearOffsetY: 2, nearBlur: 6, nearOpacity: 0.06 },
 } as const;
 
 export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity };

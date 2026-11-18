@@ -1,23 +1,60 @@
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AppNav } from '@/components/AppNav';
 import { CrewMosaic } from '@/components/CrewMosaic';
 import { AuthField } from '@/components/AuthField';
 import { Button } from '@/components/Button';
 import { ChoiceOption } from '@/components/ChoiceOption';
+import { Dropzone } from '@/components/Dropzone';
+import { FileChip } from '@/components/FileChip';
 import { Icon } from '@/components/Icon';
+import { ReviewScreen } from '@/components/ReviewScreen';
 import { Sticker } from '@/components/Sticker';
+import { UploadTips } from '@/components/UploadTips';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import {
+  WORK_UNAVAILABLE,
+  checkWork,
+  describeWork,
+  pickWorkFile,
+  releaseWork,
+  workPath,
+  type Work,
+} from '@/lib/work';
 import { cardShadow } from '@/lib/ui';
 import { opacity, size } from '@/tokens';
 
 const guidance = ['More guidance', 'Direction support', 'Targeted skill'] as const;
 type Start = 'brief' | 'screen';
 
-/** Figma: Flow A · Set up project (10551:5702) */
+/**
+ * Choosing a starting point swaps the screen between the two Refined frames:
+ * Flow A · CH02 · Set up a guided project (11125:41362) and Flow B · CH01 · Bring existing work (11125:41492).
+ */
+const copy = {
+  brief: {
+    title: 'Set up your project',
+    lead: 'Set a goal and choose a starting point.',
+    section: '1 · Project',
+    nameLabel: 'Project name',
+    screenTitle: 'Bring a screen I already have',
+    screenHint: 'Add one PNG or JPG and go straight to Make.',
+    start: 'Start project',
+  },
+  screen: {
+    title: 'Bring your own work',
+    lead: 'Set a goal, then upload your work.',
+    section: '1 · Your work',
+    nameLabel: 'Work name',
+    screenTitle: 'Bring work I already have',
+    screenHint: 'Upload an image of your design.',
+    start: 'Continue with my work',
+  },
+} as const;
+
 export default function NewProject() {
   const { session, loading } = useAuth();
   const [name, setName] = useState('');
@@ -27,37 +64,107 @@ export default function NewProject() {
   const [start, setStart] = useState<Start>('brief');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [work, setWork] = useState<Work | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [tipsOpen, setTipsOpen] = useState(false);
+
+  useEffect(() => () => releaseWork(work), [work]);
+
+  /** A picked or dropped file: check it, then open Review screen (the prototype's next step). */
+  const takeFile = useCallback((file: File | null) => {
+    if (!file) return;
+    const checked = checkWork(file);
+    if (typeof checked === 'string') {
+      setReviewing(false);
+      setError(checked);
+      return;
+    }
+    setError(null);
+    setReviewError(null);
+    setWork(checked);
+    setReviewing(true);
+  }, []);
+
+  const chooseFile = useCallback(async () => {
+    if (Platform.OS !== 'web') {
+      setError(WORK_UNAVAILABLE);
+      return;
+    }
+    takeFile(await pickWorkFile());
+  }, [takeFile]);
 
   if (loading) return null;
   if (!session) return <Redirect href="/sign-in" />;
 
+  const t = copy[start];
+
+  function chooseAnother() {
+    setReviewing(false);
+    setReviewError(null);
+    setWork(null);
+  }
+
+  /** Flow B "Continue with my work": needs a name and a file, then Review screen. */
+  function continueWithWork() {
+    if (!name.trim()) return setError('Give your work a name to start.');
+    if (!work) return setError('Add your work to continue.');
+    setError(null);
+    setReviewError(null);
+    setReviewing(true);
+  }
+
   async function create() {
     if (!session) return;
     if (!name.trim()) {
-      setError('Give your project a name to start.');
+      setReviewing(false);
+      setError(start === 'screen' ? 'Give your work a name to start.' : 'Give your project a name to start.');
       return;
     }
+    if (start === 'screen' && !work) {
+      setError('Add your work to continue.');
+      return;
+    }
+    const fail = (message: string) => {
+      setBusy(false);
+      if (start === 'screen') setReviewError(message);
+      else setError(message);
+    };
     setBusy(true);
     setError(null);
+    setReviewError(null);
     const { data, error: insertError } = await supabase
       .from('projects')
       .insert({ title: name.trim(), owner_id: session.user.id, status: 'active', skill_focus: level })
       .select('id')
       .single();
-    if (insertError || !data) {
-      setBusy(false);
-      setError(insertError?.message ?? 'The project could not be saved.');
-      return;
-    }
+    if (insertError || !data) return fail(insertError?.message ?? 'The project could not be saved.');
     const { error: contextError } = await supabase.from('project_contexts').insert({
       project_id: data.id,
       goal: goal.trim() || null,
       audience: audience.trim() || null,
       brief_source: start === 'brief' ? 'guided' : 'own_work',
     });
+    if (contextError) return fail(contextError.message);
+
+    if (start === 'screen' && work) {
+      // Your work becomes version 1. If the upload fails, remove the half-made project so a retry starts clean.
+      const path = workPath(session.user.id, data.id, work);
+      const { error: uploadError } = await supabase.storage
+        .from('artifacts')
+        .upload(path, work.file, { contentType: work.type, upsert: true });
+      const { error: versionError } = uploadError
+        ? { error: null }
+        : await supabase.from('artifact_versions').insert({ project_id: data.id, file_ref: path, version_number: 1 });
+      if (uploadError || versionError) {
+        await supabase.from('projects').delete().eq('id', data.id);
+        return fail('Your work could not be uploaded. Check your connection, then try again.');
+      }
+    }
+
     setBusy(false);
-    if (contextError) setError(contextError.message);
-    else router.replace(`/projects/${data.id}`);
+    setReviewing(false);
+    router.replace(`/projects/${data.id}`);
   }
 
   return (
@@ -79,8 +186,8 @@ export default function NewProject() {
 
             <View className="flex-row items-end justify-between">
               <View className="gap-8">
-                <Text className="font-bold text-pageTitle text-ink">Set up your project</Text>
-                <Text className="font-regular text-bodyUi text-secondaryText">Set a goal and choose a starting point.</Text>
+                <Text className="font-bold text-pageTitle text-ink">{t.title}</Text>
+                <Text className="font-regular text-bodyUi text-secondaryText">{t.lead}</Text>
               </View>
               <View className="pb-8">
                 <Button label="Four-stage guide" variant="white" size="sm" />
@@ -94,10 +201,10 @@ export default function NewProject() {
                 style={{ position: 'absolute', left: size.setupMateLeft, top: size.setupMateTop }}
               />
               <View className="gap-16">
-                <Text className="font-semibold text-cardTitle text-ink">1 · Project</Text>
+                <Text className="font-semibold text-cardTitle text-ink">{t.section}</Text>
                 <View className="flex-row gap-16">
                   <View className="flex-1">
-                    <AuthField label="Project name" value={name} onChangeText={setName} placeholder="Crumb bakery website" />
+                    <AuthField label={t.nameLabel} value={name} onChangeText={setName} placeholder="Crumb bakery website" />
                   </View>
                   <View className="flex-1">
                     <AuthField
@@ -129,7 +236,12 @@ export default function NewProject() {
               </View>
 
               <View className="gap-16">
-                <Text className="font-semibold text-cardTitle text-ink">3 · Starting point</Text>
+                <View className="min-h-controlSmall flex-row items-center justify-between">
+                  <Text className="font-semibold text-cardTitle text-ink">3 · Starting point</Text>
+                  {start === 'screen' && (
+                    <Button label="Upload tips" variant="quiet" size="sm" onPress={() => setTipsOpen(true)} />
+                  )}
+                </View>
                 <View className="flex-row gap-12">
                   <ChoiceOption
                     label="Start with the brief"
@@ -138,12 +250,18 @@ export default function NewProject() {
                     onPress={() => setStart('brief')}
                   />
                   <ChoiceOption
-                    label="Bring a screen I already have"
-                    hint="Add one PNG or JPG and go straight to Make."
+                    label={t.screenTitle}
+                    hint={t.screenHint}
                     selected={start === 'screen'}
                     onPress={() => setStart('screen')}
                   />
                 </View>
+                {start === 'screen' &&
+                  (work ? (
+                    <FileChip fileName={work.name} meta={describeWork(work)} onAction={chooseFile} />
+                  ) : (
+                    <Dropzone onChoose={chooseFile} onDropFile={takeFile} />
+                  ))}
               </View>
 
               {error && (
@@ -152,14 +270,39 @@ export default function NewProject() {
                 </View>
               )}
 
-              <View className="flex-row items-center justify-end gap-12">
+              <View className="flex-row items-center gap-12">
+                <View className="flex-1 flex-row items-center gap-6">
+                  {start === 'screen' && !work && (
+                    <>
+                      <Icon name="helpSmall" />
+                      <Text className="font-regular text-bodySmall text-secondaryText">Add your work to continue</Text>
+                    </>
+                  )}
+                </View>
                 <Button label="Cancel" variant="quiet" size="md" onPress={() => router.push('/projects')} />
-                <Button label="Start project" arrow size="md" busy={busy} onPress={create} />
+                <Button
+                  label={t.start}
+                  arrow
+                  size="md"
+                  busy={busy && !reviewing}
+                  onPress={start === 'screen' ? continueWithWork : create}
+                />
               </View>
             </View>
           </View>
         </ScrollView>
       </View>
+
+      <UploadTips visible={tipsOpen} onClose={() => setTipsOpen(false)} />
+      <ReviewScreen
+        work={reviewing ? work : null}
+        busy={busy}
+        error={reviewError}
+        onClose={() => setReviewing(false)}
+        onReplace={chooseFile}
+        onChooseAnother={chooseAnother}
+        onAdd={create}
+      />
     </View>
   );
 }
