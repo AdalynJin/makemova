@@ -4,11 +4,12 @@ import { useRef, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { CrewMosaic } from '@/components/CrewMosaic';
 import { PublicNav } from '@/components/PublicNav';
 import { Sticker, type Crew } from '@/components/Sticker';
 import { useAuth } from '@/lib/auth';
-import { asset, cardShadow, softShadow } from '@/lib/ui';
-import { radius, size, space } from '@/tokens';
+import { asset, cardShadow, previewShadow, softShadow } from '@/lib/ui';
+import { opacity, radius, size, space } from '@/tokens';
 
 type Section = 'how' | 'example' | 'plans';
 
@@ -53,66 +54,101 @@ function Eyebrow({ children, light }: { children: string; light?: boolean }) {
   return <Text className={`font-bold text-eyebrow ${light ? 'text-onDarkMuted' : 'text-ink'}`}>{children}</Text>;
 }
 
+/** Figma: Homepage v3 "Follow a clear project path" marks, exported as SVG (16 wide). */
 const path = [
-  { label: 'Brief', icon: asset.shapeBrief, w: size.shape, h: size.halfCircleHeight },
-  { label: 'Make', icon: asset.shapeMake, w: size.icon, h: size.triangleHeight },
-  { label: 'Revise', icon: asset.shapeRevise, w: size.icon, h: size.triangleHeight },
-  { label: 'Reflect', icon: asset.shapeReflect, w: size.icon, h: size.icon },
+  { label: 'Brief', icon: asset.pathBrief, h: size.pathHalfDisc },
+  { label: 'Make', icon: asset.pathMake, h: size.pathTriangle },
+  { label: 'Revise', icon: asset.pathRevise, h: size.pathTriangle },
+  { label: 'Reflect', icon: asset.pathReflect, h: size.iconSmall },
 ];
 
 function Hero({ onStart, onExample }: { onStart: () => void; onExample: () => void }) {
   return (
-    <View className="bg-canvas px-64 pt-64" style={{ height: size.heroHeight }}>
-      <Image
-        source={asset.heroArch}
+    <View className="overflow-hidden bg-paper" style={{ height: size.heroHeight }}>
+      {/* Figma: MOVA · Decorative background / Welcome. The repeat starts at the frame top, under the nav. */}
+      <CrewMosaic opacity={opacity.patternWelcome} originY={size.homeNavHeight} />
+      <View
+        className="bg-mateOrange"
         style={{
           position: 'absolute',
-          left: size.heroArtLeft,
-          top: size.heroArtTop,
-          width: size.heroArt,
-          height: size.heroArtHeight,
+          left: size.heroArchLeft,
+          top: size.heroArchTop,
+          width: size.heroArch,
+          height: size.heroArchHeight,
+          borderTopLeftRadius: radius.arch,
+          borderTopRightRadius: radius.arch,
         }}
-        contentFit="contain"
-      />
+      >
+        <View
+          className="overflow-hidden rounded-24 bg-white"
+          style={[
+            {
+              position: 'absolute',
+              left: size.heroPreviewLeft,
+              top: size.heroPreviewTop,
+              width: size.heroPreview,
+              height: size.heroPreviewHeight,
+            },
+            previewShadow,
+          ]}
+        >
+          <Image source={asset.heroPreview} style={{ width: size.heroPreview, height: size.heroPreviewHeight }} contentFit="fill" />
+        </View>
+        <Sticker crew="mate" width={size.heroMate} style={{ position: 'absolute', left: size.heroMateLeft, top: size.heroMateTop }} />
+      </View>
       <View
         className="rounded-pill bg-guidance"
         style={{ position: 'absolute', right: space[36], top: space[36], width: size.heroDot, height: size.heroDot }}
       />
-      <View className="w-heroText gap-24">
+      {/* Figma: Homepage v3 hero copy column. Each block sits at its Figma y, less the 81 nav. */}
+      <View style={{ position: 'absolute', left: space[64], top: size.heroEyebrowTop }}>
         <Eyebrow>GUIDED DESIGN PRACTICE</Eyebrow>
-        <View>
-          <Text className="font-bold text-hero text-ink">Learn design{'\n'}by making</Text>
-          <View className="self-start">
-            <View
-              className="rounded-18 bg-opusYellow"
-              style={{ position: 'absolute', left: -space[10], top: space[6], width: size.highlight, height: size.highlightHeight }}
-            />
-            <Text className="font-bold text-hero text-ink">decisions.</Text>
+      </View>
+      <View className="w-heroText" style={{ position: 'absolute', left: space[64], top: size.heroTitleTop }}>
+        <Text className="font-bold text-hero text-ink">Learn design{'\n'}by making</Text>
+        <View className="self-start">
+          <View
+            className="rounded-18 bg-opusYellow"
+            style={{ position: 'absolute', left: -space[10], top: space[14], width: size.highlight, height: size.highlightHeight }}
+          />
+          <Text className="font-bold text-hero text-ink">decisions.</Text>
+        </View>
+      </View>
+      <Text
+        className="w-heroLead font-regular text-lead text-secondaryText"
+        style={{ position: 'absolute', left: space[64], top: size.heroLeadTop }}
+      >
+        Upload a screenshot, compare two versions, and save why you picked one.
+      </Text>
+      <View className="flex-row gap-14" style={{ position: 'absolute', left: space[64], top: size.heroButtonsTop }}>
+        <Button label="Create free account" size="hero" arrow onPress={onStart} />
+        <Button label="Try the example project" size="hero" variant="outline" arrow onPress={onExample} />
+      </View>
+      <View className="flex-row items-center gap-8" style={{ position: 'absolute', left: space[64], top: size.heroNoteTop }}>
+        <Image source={asset.checkInk} style={{ width: size.check, height: size.checkHeight }} />
+        <Text className="font-medium text-labelUi text-secondaryText">One free critique. No card needed.</Text>
+      </View>
+      <View
+        className="w-heroDivider border-t border-border"
+        style={{ position: 'absolute', left: space[64], top: size.heroDividerTop }}
+      />
+      <Text className="font-bold text-labelUi text-ink" style={{ position: 'absolute', left: space[64], top: size.heroPathLabelTop }}>
+        Follow a clear project path
+      </Text>
+      <View className="flex-row items-center" style={{ position: 'absolute', left: space[64], top: size.heroPathTop }}>
+        {path.map((p, i) => (
+          <View key={p.label} className="flex-row items-center">
+            <Image source={p.icon} style={{ width: size.iconSmall, height: p.h }} contentFit="fill" />
+            <Text className="ml-8 font-medium text-nav text-ink">{p.label}</Text>
+            {i < path.length - 1 && (
+              <Image
+                source={asset.pathArrow}
+                style={{ marginLeft: space[10], marginRight: space[20], width: size.pathArrow, height: size.pathArrowHeight }}
+                contentFit="fill"
+              />
+            )}
           </View>
-        </View>
-        <Text className="w-column font-regular text-lead text-secondaryText" style={{ width: size.highlight + space[64] }}>
-          Bring one screen, compare two directions, and keep your reasoning.
-        </Text>
-        <View className="mt-24 flex-row gap-12">
-          <Button label="Create free account" size="hero" arrow onPress={onStart} />
-          <Button label="Try the example project" size="hero" variant="outline" arrow onPress={onExample} />
-        </View>
-        <View className="flex-row items-center gap-8">
-          <Image source={asset.checkInk} style={{ width: size.check, height: size.checkHeight }} />
-          <Text className="font-regular text-labelUi text-secondaryText">One free critique. No card needed.</Text>
-        </View>
-        <View className="mt-24 gap-12 border-t border-border pt-24">
-          <Text className="font-semibold text-labelUi text-ink">Follow a clear project path</Text>
-          <View className="flex-row items-center gap-12">
-            {path.map((p, i) => (
-              <View key={p.label} className="flex-row items-center gap-8">
-                <Image source={p.icon} style={{ width: p.w, height: p.h }} contentFit="contain" />
-                <Text className="font-medium text-nav text-ink">{p.label}</Text>
-                {i < path.length - 1 && <Text className="font-medium text-nav text-secondaryText">→</Text>}
-              </View>
-            ))}
-          </View>
-        </View>
+        ))}
       </View>
     </View>
   );

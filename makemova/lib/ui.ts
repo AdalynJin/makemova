@@ -10,6 +10,10 @@ export function alpha(hex: string, a: number) {
 export const cardShadow = {
   boxShadow: `0px ${shadow.card.offsetY}px ${shadow.card.blur}px ${alpha(color.shadow, shadow.card.opacity)}`,
 };
+/** Refined homepage workspace preview shadow (0 24 48, 14%). */
+export const previewShadow = {
+  boxShadow: `0px ${shadow.preview.offsetY}px ${shadow.preview.blur}px ${alpha(color.previewShadow, shadow.preview.opacity)}`,
+};
 export const softShadow = {
   boxShadow: `0px ${shadow.soft.offsetY}px ${shadow.soft.blur}px ${alpha(color.shadow, shadow.soft.opacity)}`,
 };
@@ -17,19 +21,26 @@ export const softShadow = {
 /** Every static Figma export the screens use. */
 export const asset = {
   wordmark: require('@/assets/figma/wordmark.svg'),
-  bgAccount: require('@/assets/figma/bg-account.svg'),
-  bgProjects: require('@/assets/figma/bg-projects.svg'),
-  bgFirstVisit: require('@/assets/figma/bg-first-visit.svg'),
-  bgSetup: require('@/assets/figma/bg-setup.svg'),
-  heroArch: require('@/assets/figma/home-hero-arch.png'),
+  heroPreview: require('@/assets/figma/home-workspace-preview.png'),
+  pathBrief: require('@/assets/figma/hero-path/brief.svg'),
+  pathMake: require('@/assets/figma/hero-path/make.svg'),
+  pathRevise: require('@/assets/figma/hero-path/revise.svg'),
+  pathReflect: require('@/assets/figma/hero-path/reflect.svg'),
+  pathArrow: require('@/assets/figma/hero-path/arrow.svg'),
+  crewMosaicTile: require('@/assets/figma/crew-mosaic-tile.svg'),
+  crewV2: {
+    mate: require('@/assets/figma/crew-v2/mate-orient.svg'),
+    opus: require('@/assets/figma/crew-v2/opus-read.svg'),
+    versa: require('@/assets/figma/crew-v2/versa-compare.svg'),
+    arti: require('@/assets/figma/crew-v2/arti-focus.svg'),
+    mateEncourage: require('@/assets/figma/crew-v2/mate-encourage.svg'),
+  },
   cafe1: require('@/assets/figma/cafe-sample-v1.jpg'),
   cafe2: require('@/assets/figma/cafe-sample-v2.jpg'),
   cafe3: require('@/assets/figma/cafe-sample-v3.jpg'),
-  mateShowTheWay: require('@/assets/figma/mate-show-the-way.svg'),
   peekMateGoal: require('@/assets/figma/peek-mate-goal.png'),
   peekMateMake: require('@/assets/figma/peek-mate-make.png'),
   peekArtiInspect: require('@/assets/figma/peek-arti-inspect.png'),
-  peekMateMove: require('@/assets/figma/peek-mate-move.png'),
   motionRevise: require('@/assets/figma/motion-revise.png'),
   motionReflect: require('@/assets/figma/motion-reflect.png'),
   edgeCritique: require('@/assets/figma/tool-edge-critique.png'),
@@ -53,10 +64,6 @@ export const asset = {
   luB: require('@/assets/figma/lu-b.svg'),
   luC: require('@/assets/figma/lu-c.svg'),
   luD: require('@/assets/figma/lu-d.svg'),
-  stMate: [require('@/assets/figma/st-mate-1.svg'), require('@/assets/figma/st-mate-2.svg')],
-  stVersa: [require('@/assets/figma/st-versa-1.svg'), require('@/assets/figma/st-versa-2.svg')],
-  stOpus: [require('@/assets/figma/st-opus-1.svg'), require('@/assets/figma/st-opus-2.svg')],
-  stArti: [require('@/assets/figma/st-arti-1.svg'), require('@/assets/figma/st-arti-2.svg')],
   iconHelp: require('@/assets/figma/icon-help.svg'),
   iconHelpSmall: require('@/assets/figma/icon-help-small.svg'),
   iconFolder: require('@/assets/figma/icon-folder.svg'),

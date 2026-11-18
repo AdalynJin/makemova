@@ -40,6 +40,7 @@ export const color = {
   compareIcon: '#FFF4B8',
   tutorialIcon: '#FFE3C7',
   shadow: '#121318', // card shadow colour (used at low opacity)
+  previewShadow: '#14171A', // Refined homepage workspace preview shadow (used at low opacity)
 } as const;
 
 /** Semantic roles. Use these in components. */
@@ -152,6 +153,7 @@ export const radius = {
   20: 20,
   22: 22, // tool cards
   28: 28, // hero buttons, preview card
+  arch: 338, // Refined homepage Mate arch top corners
 } as const;
 
 /** Fixed component sizes in px, from the Week 8 components. */
@@ -301,6 +303,61 @@ export const size = {
   wordmarkHeight: 19.89,
   badge: 56,
   toolIcon: 72,
+
+  // Week 8 Refined (11085:17520) — brand pattern and crew v2 placements
+  crewMosaicTile: 288, // Brand pattern · 05 · Crew mosaic, 72 × 72 cells
+  heroArch: 676, // Mate arch (11125:38770)
+  heroArchHeight: 780,
+  heroArchLeft: 700,
+  heroArchTop: 39, // 120 in the frame, minus the 81 nav
+  heroPreview: 596, // Workspace preview (11125:38771)
+  heroPreviewHeight: 440,
+  heroPreviewLeft: 40,
+  heroPreviewTop: 260,
+  heroMate: 256.679, // Refined crew · visual (11214:30742), Mate · Orient
+  heroMateLeft: 226.296,
+  heroMateTop: 21.813,
+  signInMate: 69.299, // Refined crew · visual (11214:31403), Mate · Orient
+  signInMateLeft: 343.35, // from the auth card's left edge
+  signInMateTop: -74.42, // feet rest on the auth card
+  setupMate: 95.92, // Refined crew · visual (11214:31805), Mate · Encourage
+  setupMateLeft: 559.54, // from the set-up card's left edge
+  setupMateTop: -84.18, // feet rest on the set-up card
+  // Homepage v3 hero copy column, Figma y minus the 81 nav (11125:38739–38769)
+  heroEyebrowTop: 95,
+  heroTitleTop: 129,
+  heroLead: 520,
+  heroLeadTop: 445,
+  heroButtonsTop: 571,
+  heroNoteTop: 652,
+  heroDivider: 560,
+  heroDividerTop: 711,
+  heroPathLabelTop: 732,
+  heroPathTop: 765,
+  pathHalfDisc: 8, // Brief half disc, 16 × 8
+  pathTriangle: 13.76, // Make / Revise triangles, 16 wide
+  pathArrow: 15.6,
+  pathArrowHeight: 12.8,
+} as const;
+
+/**
+ * Crew v2 sticker geometry from "Refined sticker masters" (11203:19606).
+ * art = exported SVG canvas; box = component frame; offset = frame origin inside the SVG
+ * (die-cut and shadow reach past the frame, exactly as Figma exports them).
+ */
+export const crewArt = {
+  mate: { art: [240, 253], box: [203, 218], offset: [24.455, 27.762] }, // Mate · Orient 11203:19607
+  opus: { art: [240, 253], box: [160, 199], offset: [38, 46] }, // Opus · Read 11203:19707
+  versa: { art: [240, 258], box: [205, 249], offset: [27.533, 1.25] }, // Versa · Compare 11203:19807
+  arti: { art: [240, 253], box: [191, 204], offset: [31.957, 41.045] }, // Arti · Focus 11203:19897
+  mateEncourage: { art: [245, 253], box: [237, 208], offset: [4.252, 37.893] }, // Mate · Encourage 11203:19656
+} as const;
+
+/** Brand pattern layer opacity per surface (Refined pattern repair). */
+export const opacity = {
+  patternWelcome: 0.05,
+  patternAccount: 0.125,
+  patternProjects: 0.062,
 } as const;
 
 export const border = {
@@ -313,8 +370,9 @@ export const border = {
 /** Card shadow from the Week 8 hi-fi (0 8 24, 14%). */
 export const shadow = {
   card: { offsetY: 8, blur: 24, opacity: 0.14 },
+  preview: { offsetY: 24, blur: 48, opacity: 0.14 }, // Refined homepage workspace preview
   soft: { offsetY: 4, blur: 12, opacity: 0.08 },
 } as const;
 
-export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow };
+export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity };
 export default tokens;
