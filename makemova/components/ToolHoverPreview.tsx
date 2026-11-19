@@ -5,13 +5,14 @@ import type { Tool } from '@/components/MovaToolCard';
 import { asset, hoverShadow } from '@/lib/ui';
 import { size } from '@/tokens';
 
-const preview: Record<Tool, { name: string; intro: string; surface: string; top: number; motion: number }> = {
+const preview: Record<Tool, { name: string; intro: string; surface: string; top: number; motion: number; shot: number }> = {
   critique: {
     name: 'Critique',
     intro: 'Get feedback on one version and find one concrete change to try.',
     surface: 'bg-previewCritique border-previewCritiqueBorder',
     top: size.toolPreviewTopCritique,
     motion: asset.motionCritique,
+    shot: asset.previewShotCritique,
   },
   compare: {
     name: 'Compare',
@@ -19,6 +20,7 @@ const preview: Record<Tool, { name: string; intro: string; surface: string; top:
     surface: 'bg-previewCompare border-previewCompareBorder',
     top: size.toolPreviewTopCompare,
     motion: asset.motionCompare,
+    shot: asset.previewShotCompare,
   },
   tutorials: {
     name: 'Tutorials',
@@ -26,12 +28,13 @@ const preview: Record<Tool, { name: string; intro: string; surface: string; top:
     surface: 'bg-previewTutorials border-previewTutorialsBorder',
     top: size.toolPreviewTopTutorials,
     motion: asset.motionTutorials,
+    shot: asset.previewShotTutorials,
   },
 };
 
 /**
  * Figma: MOVA · Hover preview · <tool> (11125:42023, 42028, 42033). Shown on mouse enter, left of the tools panel.
- * The screenshot slot (312 × 132) waits for the three preview images; it shows its white fill until then.
+ * Screenshot slot 312 × 132, radius 12, white fill with the image (provided by the designer, 2026-11-19).
  */
 export function ToolHoverPreview({ tool }: { tool: Tool }) {
   const p = preview[tool];
@@ -43,7 +46,9 @@ export function ToolHoverPreview({ tool }: { tool: Tool }) {
     >
       <Text className="font-bold text-previewName text-ink">{p.name}</Text>
       <Text className="w-toolPreviewIntro font-regular text-previewIntro text-ink">{p.intro}</Text>
-      <View className="h-toolPreviewShotHeight w-toolPreviewShot rounded-12 bg-white" />
+      <View className="h-toolPreviewShotHeight w-toolPreviewShot overflow-hidden rounded-12 bg-white">
+        <Image source={p.shot} style={{ flex: 1 }} contentFit="cover" />
+      </View>
       <Image
         source={p.motion}
         style={{

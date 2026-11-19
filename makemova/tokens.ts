@@ -132,6 +132,7 @@ export const textStyle = {
   // R5 · Tutorials category (11125:60129)
   category: { size: 11, lineHeight: 16, letterSpacing: 0 },
   panelTitle: { size: 18, lineHeight: 26, letterSpacing: -0.2 }, // R7 · Tools title
+  compareLabel: { size: 12.174, lineHeight: 17.391, letterSpacing: 0 }, // Compare versions · A / B labels and actions
 } as const;
 
 /** Spacing scale in px. */
@@ -177,6 +178,7 @@ export const radius = {
   28: 28, // hero buttons, preview card
   arch: 338, // Refined homepage Mate arch top corners
   toolMova: 22.286, // MOVA tool card
+  compareFrame: 8.696, // Compare versions · design frame
 } as const;
 
 /** Fixed component sizes in px, from the Week 8 components. */
@@ -402,6 +404,22 @@ export const size = {
   toolPreviewMotionLeft: 235,
   toolPreviewMotionTop: -23.6,
   critiqueFocusValue: 176,
+  // Compare versions · Selection only (11125:41951): A and B columns drawn at 560 / 644 scale
+  compareMode: 1144,
+  compareModeLeft: 124, // centred in the 1392 work area
+  compareColumn: 560,
+  compareFrameHeight: 367,
+  compareShot: 532,
+  compareShotHeight: 339,
+  compareControl: 31.304,
+  compareChange: 136,
+  compareExit: 172, // Action · Exit comparison
+  compareGap: 10.435,
+  comparePad: 13.913,
+  compareStroke: 0.87,
+  // R5 · Choose left / right version (11125:60079, 60104)
+  versionIcon: 24,
+  versionView: 144,
 } as const;
 
 /**

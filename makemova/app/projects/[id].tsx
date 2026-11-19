@@ -7,6 +7,7 @@ import { AddScreenDialog } from '@/components/AddScreenDialog';
 import { AppNav } from '@/components/AppNav';
 import { BriefDetails } from '@/components/BriefDetails';
 import { Button } from '@/components/Button';
+import { CompareVersions, type CompareVersion } from '@/components/CompareVersions';
 import { EditDropdown } from '@/components/EditDropdown';
 import { EditSourceDialog } from '@/components/EditSourceDialog';
 import { Icon } from '@/components/Icon';
@@ -23,8 +24,14 @@ import { color, size, space } from '@/tokens';
 type Step = Stage | 'explain';
 
 /** A saved screen: artifact_versions row plus a signed URL to show it. */
-type Version = { number: number; uri: string | null };
-type Workspace = { title: string; audience: string; goal: string; example: boolean; versions: Version[] };
+type Version = { number: number; uri: string | null; file: string };
+type Workspace = {
+  title: string;
+  audience: string;
+  goal: string;
+  example: boolean;
+  versions: Version[];
+};
 type Load = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; ws: Workspace };
 
 const EXAMPLE: Workspace = {
@@ -36,7 +43,10 @@ const EXAMPLE: Workspace = {
 };
 
 /** Copy the café frames use where the brief is paraphrased (Edit source step 2, R6 · Brief details). */
-const EXAMPLE_COPY = { sameGoal: 'pickup easy to find.', success: 'Make pickup easy to find; keep the menu accessible.' };
+const EXAMPLE_COPY = {
+  sameGoal: 'pickup easy to find.',
+  success: 'Make pickup easy to find; keep the menu accessible.',
+};
 
 /** Edit menu dialogs. Figma: Edit source, Add a screen, Review screen (swap), Brief details. */
 type EditDialog = 'source' | 'add' | 'review' | 'brief' | null;
@@ -62,6 +72,8 @@ export default function ProjectWorkspace() {
   const [panelOpen, setPanelOpen] = useState(true);
   const [tradeOff, setTradeOff] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  // Compare versions · Selection only: Figma's compare = true, single = false (tools and header actions hide).
+  const [comparing, setComparing] = useState(false);
   const [dialog, setDialog] = useState<EditDialog>(null);
   const [work, setWork] = useState<Work | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
@@ -79,17 +91,28 @@ export default function ProjectWorkspace() {
       .eq('id', id)
       .maybeSingle();
     if (error) return setLoad({ status: 'error', message: error.message });
-    if (!data) return setLoad({ status: 'error', message: 'This project was not found.' });
+    if (!data)
+      return setLoad({
+        status: 'error',
+        message: 'This project was not found.',
+      });
     const ctx = Array.isArray(data.project_contexts) ? data.project_contexts[0] : data.project_contexts;
-    const rows = [...((data.artifact_versions ?? []) as { version_number: number; file_ref: string | null }[])].sort(
-      (a, b) => a.version_number - b.version_number,
-    );
+    const rows = [
+      ...((data.artifact_versions ?? []) as {
+        version_number: number;
+        file_ref: string | null;
+      }[]),
+    ].sort((a, b) => a.version_number - b.version_number);
     const paths = rows.map((r) => r.file_ref).filter((p): p is string => !!p);
     const signed = paths.length
-      ? (await supabase.storage.from('artifacts').createSignedUrls(paths, 60 * 60)).data ?? []
+      ? ((await supabase.storage.from('artifacts').createSignedUrls(paths, 60 * 60)).data ?? [])
       : [];
     const urlFor = (path: string | null) => signed.find((u) => u.path === path)?.signedUrl ?? null;
-    const versions = rows.map((r) => ({ number: r.version_number, uri: urlFor(r.file_ref) }));
+    const versions = rows.map((r) => ({
+      number: r.version_number,
+      uri: urlFor(r.file_ref),
+      file: r.file_ref?.split('/').at(-1) ?? '',
+    }));
     if (versions.length) setVersion(versions[versions.length - 1].number);
     setLoad({
       status: 'ready',
@@ -112,6 +135,13 @@ export default function ProjectWorkspace() {
     if (load.status === 'ready' && load.ws.example) setVersion(versionsAt[next].current);
     setPanelOpen(true);
     setEditOpen(false);
+    setComparing(false);
+  }
+
+  /** Compare tool → comparison of two versions on Make. */
+  function compare() {
+    go('make');
+    setComparing(true);
   }
 
   /** Edit menu items close the menu, then open their dialog (Figma: R8/edit-open = false, then Open overlay). */
@@ -169,7 +199,20 @@ export default function ProjectWorkspace() {
       return setReviewError('Your screen could not be added. Check your connection, then try again.');
     }
     const { data: signed } = await supabase.storage.from('artifacts').createSignedUrl(path, 60 * 60);
-    setLoad({ status: 'ready', ws: { ...ws, versions: [...ws.versions, { number: next, uri: signed?.signedUrl ?? null }] } });
+    setLoad({
+      status: 'ready',
+      ws: {
+        ...ws,
+        versions: [
+          ...ws.versions,
+          {
+            number: next,
+            uri: signed?.signedUrl ?? null,
+            file: path.split('/').at(-1) ?? '',
+          },
+        ],
+      },
+    });
     setVersion(next);
     setBusy(false);
     setDialog(null);
@@ -191,7 +234,12 @@ export default function ProjectWorkspace() {
             <>
               <Text className="font-semibold text-cardTitle text-ink">Project could not load</Text>
               <Text className="font-regular text-bodyUi text-secondaryText">{load.message}</Text>
-              <Button label="Back to My projects" variant="white" size="sm" onPress={() => router.replace('/projects')} />
+              <Button
+                label="Back to My projects"
+                variant="white"
+                size="sm"
+                onPress={() => router.replace('/projects')}
+              />
             </>
           )}
         </View>
@@ -204,16 +252,55 @@ export default function ProjectWorkspace() {
   const count = ws.example ? versionsAt[step].count : Math.max(1, ws.versions.length);
   const shown = ws.versions.find((v) => v.number === version);
 
+  /** Café example names and files from the Figma version pickers; real projects use their saved files. */
+  const compareVersions: CompareVersion[] = ws.example
+    ? [
+        {
+          number: 1,
+          name: 'v1 · First attempt',
+          file: 'cafe-home-v1.png',
+          source: asset.cafe1,
+        },
+        {
+          number: 2,
+          name: 'v2 · Current direction',
+          file: 'cafe-home-v2.png',
+          source: asset.cafe2,
+        },
+      ]
+    : ws.versions.map((v, i) => ({
+        number: v.number,
+        name: i === ws.versions.length - 1 ? `v${v.number} · Current` : `v${v.number}`,
+        file: v.file,
+        source: v.uri ? { uri: v.uri } : null,
+      }));
+  const latest = compareVersions.at(-1)?.number ?? 1;
+  const previous = compareVersions.at(-2)?.number ?? latest + 1;
+
   const editItems = [
     { label: 'Edit source', onPress: () => openDialog('source') },
     { label: 'Add screenshot', onPress: () => openDialog('add') },
     ...(step === 'brief' ? [{ label: 'Brief details', onPress: () => openDialog('brief') }] : []),
   ];
 
-  const next: Record<Step, { label: string; to?: Step; disabled?: boolean; arrow?: boolean; finish?: boolean }> = {
+  const next: Record<
+    Step,
+    {
+      label: string;
+      to?: Step;
+      disabled?: boolean;
+      arrow?: boolean;
+      finish?: boolean;
+    }
+  > = {
     brief: { label: 'Next: Make', to: 'make' },
     make: { label: 'Next: Revise', to: 'explain', arrow: true },
-    explain: { label: 'Next: Revise', to: 'revise', arrow: true, disabled: !tradeOff },
+    explain: {
+      label: 'Next: Revise',
+      to: 'revise',
+      arrow: true,
+      disabled: !tradeOff,
+    },
     revise: { label: 'Next: Reflect', to: 'reflect', arrow: true },
     reflect: { label: 'Finish', finish: true },
   };
@@ -233,49 +320,92 @@ export default function ProjectWorkspace() {
         </Text>
         <StageNav current={stage} onChange={(s) => go(s)} />
         <View className="w-column flex-row items-center justify-end gap-12">
-          <View>
-            <Button label="Edit" variant="secondary" size="header" onPress={() => setEditOpen(!editOpen)} />
-            {editOpen && (
-              <View style={{ position: 'absolute', left: 0, top: size.editDropdownTop }}>
-                <EditDropdown items={editItems} />
+          {!comparing && (
+            <>
+              <View>
+                <Button label="Edit" variant="secondary" size="header" onPress={() => setEditOpen(!editOpen)} />
+                {editOpen && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: size.editDropdownTop,
+                    }}
+                  >
+                    <EditDropdown items={editItems} />
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-          <Button
-            label={n.label}
-            size="header"
-            width={size.nextButton}
-            arrow={n.arrow}
-            leading={n.finish ? 'finish' : undefined}
-            disabled={n.disabled}
-            onPress={() => (n.finish ? router.replace('/projects') : n.to && go(n.to))}
-          />
+              <Button
+                label={n.label}
+                size="header"
+                width={size.nextButton}
+                arrow={n.arrow}
+                leading={n.finish ? 'finish' : undefined}
+                disabled={n.disabled}
+                onPress={() => (n.finish ? router.replace('/projects') : n.to && go(n.to))}
+              />
+            </>
+          )}
         </View>
       </View>
 
       <ScrollView className="flex-1" contentContainerClassName="p-24">
-        <View className={`rounded-24 ${step === 'brief' ? 'bg-white' : ''}`} style={{ minHeight: size.artworkHeight + space[48] }}>
-          {/* Artwork, or the before/after comparison on Reflect */}
-          <View style={{ marginLeft: size.artworkLeft, width: size.artwork }}>
-            {step === 'reflect' ? (
-              <ReflectCompare example={ws.example} />
-            ) : (
-              <View style={{ width: size.artwork, height: size.artworkHeight }}>
-                {ws.example || shown?.uri ? (
-                  <Image
-                    source={ws.example ? cafe[version - 1] : { uri: shown?.uri ?? undefined }}
-                    style={{ position: 'absolute', left: space[16], top: space[16], width: size.artworkImage, height: size.artworkImageHeight }}
-                    contentFit={ws.example ? 'cover' : 'contain'}
-                  />
-                ) : (
-                  <EmptyArtwork />
-                )}
-              </View>
-            )}
-          </View>
+        <View
+          className={`rounded-24 ${step === 'brief' ? 'bg-white' : ''}`}
+          style={{ minHeight: size.artworkHeight + space[48] }}
+        >
+          {comparing ? (
+            <View style={{ marginLeft: size.compareModeLeft }}>
+              <CompareVersions
+                versions={compareVersions}
+                initialA={previous}
+                initialB={latest}
+                onUse={(v) => {
+                  go('explain');
+                  setVersion(v);
+                }}
+                onExit={() => {
+                  setComparing(false);
+                  setPanelOpen(true);
+                }}
+              />
+            </View>
+          ) : (
+            /* Artwork, or the before/after comparison on Reflect */
+            <View style={{ marginLeft: size.artworkLeft, width: size.artwork }}>
+              {step === 'reflect' ? (
+                <ReflectCompare example={ws.example} />
+              ) : (
+                <View style={{ width: size.artwork, height: size.artworkHeight }}>
+                  {ws.example || shown?.uri ? (
+                    <Image
+                      source={ws.example ? cafe[version - 1] : { uri: shown?.uri ?? undefined }}
+                      style={{
+                        position: 'absolute',
+                        left: space[16],
+                        top: space[16],
+                        width: size.artworkImage,
+                        height: size.artworkImageHeight,
+                      }}
+                      contentFit={ws.example ? 'cover' : 'contain'}
+                    />
+                  ) : (
+                    <EmptyArtwork />
+                  )}
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Version switcher · Floating */}
-          <View style={{ position: 'absolute', left: 0, top: size.versionTop - (step === 'brief' ? 0 : size.versionRow / 2) }}>
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: size.versionTop - (step === 'brief' ? 0 : size.versionRow / 2),
+            }}
+          >
             {Array.from({ length: count }, (_, i) => i + 1).map((v) => {
               const current = v === version;
               return (
@@ -302,18 +432,20 @@ export default function ProjectWorkspace() {
             })}
           </View>
 
-          {/* R10 · Tools open control */}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={panelOpen ? 'Collapse panel' : 'Expand panel'}
-            onPress={() => setPanelOpen(!panelOpen)}
-            className="h-collapse w-collapse items-center justify-center rounded-pill border border-border bg-white"
-            style={{ position: 'absolute', right: 0, top: 0 }}
-          >
-            <Icon name={step === 'make' && panelOpen ? 'chevronDown' : 'arrowRight'} size={size.iconSmall} />
-          </Pressable>
+          {/* R10 · Tools open control (hidden while comparing, as the tools anchor follows Figma's single) */}
+          {!comparing && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={panelOpen ? 'Collapse panel' : 'Expand panel'}
+              onPress={() => setPanelOpen(!panelOpen)}
+              className="h-collapse w-collapse items-center justify-center rounded-pill border border-border bg-white"
+              style={{ position: 'absolute', right: 0, top: 0 }}
+            >
+              <Icon name={step === 'make' && panelOpen ? 'chevronDown' : 'arrowRight'} size={size.iconSmall} />
+            </Pressable>
+          )}
 
-          {panelOpen && (
+          {panelOpen && !comparing && (
             <View
               style={{
                 position: 'absolute',
@@ -323,16 +455,16 @@ export default function ProjectWorkspace() {
               }}
             >
               {step === 'brief' && (
-                <BriefPanel title={ws.example ? 'The café brief' : 'Your brief'} audience={ws.audience} goal={ws.goal} />
-              )}
-              {step === 'make' && (
-                <MakePanel
-                  version={`v${version} · Current`}
-                  onCritique={() => go('explain')}
-                  onCompare={() => go('explain')}
+                <BriefPanel
+                  title={ws.example ? 'The café brief' : 'Your brief'}
+                  audience={ws.audience}
+                  goal={ws.goal}
                 />
               )}
-              {step === 'explain' && <ExplainPanel tradeOff={tradeOff} onTradeOff={setTradeOff} onBack={() => go('make')} />}
+              {step === 'make' && (
+                <MakePanel version={`v${version} · Current`} onCritique={() => go('explain')} onCompare={compare} />
+              )}
+              {step === 'explain' && <ExplainPanel tradeOff={tradeOff} onTradeOff={setTradeOff} onBack={compare} />}
               {step === 'revise' && <RevisePanel />}
               {step === 'reflect' && (
                 <ReflectPanel onBack={() => go('make')} onFinish={() => router.replace('/projects')} />
@@ -393,7 +525,13 @@ function EmptyArtwork() {
   return (
     <View
       className="items-center justify-center gap-8 rounded-24 border border-dashed border-secondaryText bg-white"
-      style={{ position: 'absolute', left: space[16], top: space[16], width: size.artworkImage, height: size.artworkImageHeight }}
+      style={{
+        position: 'absolute',
+        left: space[16],
+        top: space[16],
+        width: size.artworkImage,
+        height: size.artworkImageHeight,
+      }}
     >
       <Text className="font-semibold text-cardTitle text-ink">No screen yet</Text>
       <Text className="font-regular text-bodyUi text-secondaryText">Add one PNG or JPG in Make to get feedback.</Text>
