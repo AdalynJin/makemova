@@ -52,8 +52,11 @@ export function describeWork(work: Work) {
   return `${kind} · ${sizeLabel} · one screen`;
 }
 
-/** Storage path: <user id>/<project id>/<file name>, as the artifacts bucket policy expects. */
-export function workPath(userId: string, projectId: string, work: Work) {
+/**
+ * Storage path: <user id>/<project id>/<file name>, as the artifacts bucket policy expects.
+ * Versions after the first get a "v<n>-" prefix so a new screen never overwrites an earlier one.
+ */
+export function workPath(userId: string, projectId: string, work: Work, version = 1) {
   const ext = work.type === 'image/png' ? 'png' : 'jpg';
   const base =
     work.name
@@ -61,5 +64,5 @@ export function workPath(userId: string, projectId: string, work: Work) {
       .replace(/[^a-zA-Z0-9-_]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 80) || 'work';
-  return `${userId}/${projectId}/${base}.${ext}`;
+  return `${userId}/${projectId}/${version > 1 ? `v${version}-` : ''}${base}.${ext}`;
 }

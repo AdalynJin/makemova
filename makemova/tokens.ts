@@ -42,6 +42,15 @@ export const color = {
   shadow: '#121318', // card shadow colour (used at low opacity)
   previewShadow: '#14171A', // Refined homepage workspace preview shadow (used at low opacity)
   dialogShadow: '#000000', // R4 dialog shadow (used at low opacity)
+  // R7 · Tools (11125:41996) and MOVA · Hover preview (11125:42023, 42028, 42033)
+  toolsShadow: '#141717', // tools panel shadow (used at low opacity)
+  hoverShadow: '#171717', // hover preview shadow (used at low opacity)
+  previewCritique: '#FFE1EE',
+  previewCritiqueBorder: '#FFA0C7',
+  previewCompare: '#E4EAFF',
+  previewCompareBorder: '#AEBBFF',
+  previewTutorials: '#FFF2B4',
+  previewTutorialsBorder: '#FFDF49',
 } as const;
 
 /** Semantic roles. Use these in components. */
@@ -113,6 +122,16 @@ export const textStyle = {
   eyebrow: { size: 13, lineHeight: 16, letterSpacing: 1.3 },
   labelSmall: { size: 12, lineHeight: 16, letterSpacing: 0 },
   meta: { size: 11, lineHeight: 14, letterSpacing: 0.22 },
+  // MOVA tool card · 8.2 icon edge (11159:20888): the card is drawn at 104 / 140 scale
+  toolName: { size: 16.714, lineHeight: 22.286, letterSpacing: 0 },
+  toolIntro: { size: 12.071, lineHeight: 16.714, letterSpacing: 0 },
+  toolMeta: { size: 11.143, lineHeight: 14.857, letterSpacing: 0 },
+  // MOVA · Hover preview (11125:42023)
+  previewName: { size: 22, lineHeight: 29, letterSpacing: 0 },
+  previewIntro: { size: 14, lineHeight: 18, letterSpacing: 0 },
+  // R5 · Tutorials category (11125:60129)
+  category: { size: 11, lineHeight: 16, letterSpacing: 0 },
+  panelTitle: { size: 18, lineHeight: 26, letterSpacing: -0.2 }, // R7 · Tools title
 } as const;
 
 /** Spacing scale in px. */
@@ -139,6 +158,8 @@ export const space = {
   80: 80,
   96: 96,
   120: 120,
+  9: 9, // MOVA · Hover preview gap
+  15: 15, // MOVA · Hover preview side padding inside its 1 stroke
 } as const;
 
 export const radius = {
@@ -155,6 +176,7 @@ export const radius = {
   22: 22, // tool cards
   28: 28, // hero buttons, preview card
   arch: 338, // Refined homepage Mate arch top corners
+  toolMova: 22.286, // MOVA tool card
 } as const;
 
 /** Fixed component sizes in px, from the Week 8 components. */
@@ -177,6 +199,7 @@ export const size = {
   authCard: 480,
   control: 44, // inputs and auth buttons
   controlSmall: 36,
+  controlHeader: 40, // R8 · Compact workspace header buttons, R9 · Edit dropdown items
   controlLarge: 48,
   heroButton: 56,
   iconBox: 44,
@@ -348,6 +371,37 @@ export const size = {
   motionBriefHeight: 89,
   motionBriefLeft: 25.79, // from the dialog's left edge
   motionBriefTop: -67, // feet rest on the dialog
+  // Week 8 Refined · Edit menu, project actions, tools (Task: Edit / ⋯ / Tools)
+  editDropdown: 240, // R9 · Edit dropdown (11125:41814)
+  editDropdownTop: 48, // below the 40 Edit button, 4 above the header edge
+  dialogSmall: 480, // R5 · Delete project confirmation, Confirm critique, Choose a focus
+  projectActions: 240, // R5 · Project actions (11125:60029)
+  motionRevise96: 96.417, // MOVA · Motion · revise in R4 · Dialog · Edit source
+  motionTutorialsDialog: 94, // MOVA · Motion · tutorials in R5 · Tutorials
+  motionTutorialsDialogHeight: 87,
+  motionTutorialsDialogLeft: 442,
+  toastUndo: 112,
+  tutorialThumb: 64,
+  tutorialIcon: 28,
+  toolMovaCard: 319.429, // MOVA tool card (11125:42016)
+  toolCopy: 183.9,
+  toolCopyGap: 3.714,
+  toolCardLeft: 14.857,
+  toolEdgeWidth: 120.714,
+  toolPreview: 344, // MOVA · Hover preview
+  toolPreviewHeight: 246,
+  toolPreviewLeft: -440, // from the tools panel's left edge (anchor x −360, panel x 80)
+  toolPreviewTopCritique: 7, // from the tools panel's top (anchor y 55, panel y 48)
+  toolPreviewTopCompare: 115,
+  toolPreviewTopTutorials: 223,
+  toolPreviewIntro: 224,
+  toolPreviewShot: 312,
+  toolPreviewShotHeight: 132,
+  toolPreviewMotion: 101,
+  toolPreviewMotionHeight: 93.2,
+  toolPreviewMotionLeft: 235,
+  toolPreviewMotionTop: -23.6,
+  critiqueFocusValue: 176,
 } as const;
 
 /**
@@ -371,6 +425,11 @@ export const opacity = {
   scrim: 0.32, // dialog page backdrop, ink at 32%
 } as const;
 
+/** Background blur in px. */
+export const blur = {
+  scrim: 6, // dialog page backdrop
+} as const;
+
 export const border = {
   resting: 1, // empty inputs, unselected choices
   focus: 2, // the field you are typing in
@@ -385,7 +444,9 @@ export const shadow = {
   soft: { offsetY: 4, blur: 12, opacity: 0.08 },
   // R4 dialogs: 0 16 48 −8 at 12% and 0 2 6 at 6%, black
   dialog: { offsetY: 16, blur: 48, spread: -8, opacity: 0.12, nearOffsetY: 2, nearBlur: 6, nearOpacity: 0.06 },
+  tools: { offsetY: 10, blur: 28, opacity: 0.14 }, // R7 · Tools panel
+  hover: { offsetY: 8, blur: 24, opacity: 0.16 }, // MOVA · Hover preview
 } as const;
 
-export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity };
+export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity, blur };
 export default tokens;

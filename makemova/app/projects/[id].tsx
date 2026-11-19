@@ -1,22 +1,30 @@
 import { Image } from 'expo-image';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { AddScreenDialog } from '@/components/AddScreenDialog';
 import { AppNav } from '@/components/AppNav';
+import { BriefDetails } from '@/components/BriefDetails';
 import { Button } from '@/components/Button';
+import { EditDropdown } from '@/components/EditDropdown';
+import { EditSourceDialog } from '@/components/EditSourceDialog';
 import { Icon } from '@/components/Icon';
+import { ReviewScreen } from '@/components/ReviewScreen';
 import { StageNav, type Stage } from '@/components/StageNav';
 import { BriefPanel, ExplainPanel, MakePanel, ReflectPanel, RevisePanel } from '@/components/WorkspacePanels';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { asset } from '@/lib/ui';
+import { WORK_UNAVAILABLE, checkWork, pickWorkFile, releaseWork, workPath, type Work } from '@/lib/work';
 import { color, size, space } from '@/tokens';
 
 /** Explain is a step inside Make: the stage nav still shows Make. */
 type Step = Stage | 'explain';
 
-type Workspace = { title: string; audience: string; goal: string; example: boolean };
+/** A saved screen: artifact_versions row plus a signed URL to show it. */
+type Version = { number: number; uri: string | null };
+type Workspace = { title: string; audience: string; goal: string; example: boolean; versions: Version[] };
 type Load = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; ws: Workspace };
 
 const EXAMPLE: Workspace = {
@@ -24,7 +32,14 @@ const EXAMPLE: Workspace = {
   audience: 'Students between classes.',
   goal: 'Make pickup easy to find and keep the menu accessible.',
   example: true,
+  versions: [],
 };
+
+/** Copy the café frames use where the brief is paraphrased (Edit source step 2, R6 · Brief details). */
+const EXAMPLE_COPY = { sameGoal: 'pickup easy to find.', success: 'Make pickup easy to find; keep the menu accessible.' };
+
+/** Edit menu dialogs. Figma: Edit source, Add a screen, Review screen (swap), Brief details. */
+type EditDialog = 'source' | 'add' | 'review' | 'brief' | null;
 
 const cafe = [asset.cafe1, asset.cafe2, asset.cafe3];
 
@@ -46,18 +61,36 @@ export default function ProjectWorkspace() {
   const [version, setVersion] = useState(1);
   const [panelOpen, setPanelOpen] = useState(true);
   const [tradeOff, setTradeOff] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [dialog, setDialog] = useState<EditDialog>(null);
+  const [work, setWork] = useState<Work | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => () => releaseWork(work), [work]);
 
   const fetchProject = useCallback(async () => {
     if (id === 'example') return;
     setLoad({ status: 'loading' });
     const { data, error } = await supabase
       .from('projects')
-      .select('title, project_contexts(goal, audience)')
+      .select('title, project_contexts(goal, audience), artifact_versions(version_number, file_ref)')
       .eq('id', id)
       .maybeSingle();
     if (error) return setLoad({ status: 'error', message: error.message });
     if (!data) return setLoad({ status: 'error', message: 'This project was not found.' });
     const ctx = Array.isArray(data.project_contexts) ? data.project_contexts[0] : data.project_contexts;
+    const rows = [...((data.artifact_versions ?? []) as { version_number: number; file_ref: string | null }[])].sort(
+      (a, b) => a.version_number - b.version_number,
+    );
+    const paths = rows.map((r) => r.file_ref).filter((p): p is string => !!p);
+    const signed = paths.length
+      ? (await supabase.storage.from('artifacts').createSignedUrls(paths, 60 * 60)).data ?? []
+      : [];
+    const urlFor = (path: string | null) => signed.find((u) => u.path === path)?.signedUrl ?? null;
+    const versions = rows.map((r) => ({ number: r.version_number, uri: urlFor(r.file_ref) }));
+    if (versions.length) setVersion(versions[versions.length - 1].number);
     setLoad({
       status: 'ready',
       ws: {
@@ -65,6 +98,7 @@ export default function ProjectWorkspace() {
         audience: ctx?.audience || 'Add who this is for.',
         goal: ctx?.goal || 'Add what you want to improve.',
         example: false,
+        versions,
       },
     });
   }, [id]);
@@ -75,8 +109,72 @@ export default function ProjectWorkspace() {
 
   function go(next: Step) {
     setStep(next);
-    setVersion(versionsAt[next].current);
+    if (load.status === 'ready' && load.ws.example) setVersion(versionsAt[next].current);
     setPanelOpen(true);
+    setEditOpen(false);
+  }
+
+  /** Edit menu items close the menu, then open their dialog (Figma: R8/edit-open = false, then Open overlay). */
+  function openDialog(d: EditDialog) {
+    setEditOpen(false);
+    setAddError(null);
+    setDialog(d);
+  }
+
+  /** A picked or dropped screen: check it, then swap Add a screen for Review screen. */
+  const takeFile = useCallback((file: File | null) => {
+    if (!file) return;
+    const checked = checkWork(file);
+    if (typeof checked === 'string') return setAddError(checked);
+    setAddError(null);
+    setReviewError(null);
+    setWork(checked);
+    setDialog('review');
+  }, []);
+
+  const chooseFile = useCallback(async () => {
+    if (Platform.OS !== 'web') return setAddError(WORK_UNAVAILABLE);
+    takeFile(await pickWorkFile());
+  }, [takeFile]);
+
+  function closeDialog() {
+    if (busy) return;
+    setDialog(null);
+    setWork(null);
+    setReviewError(null);
+  }
+
+  /** Review screen · Add to project: save the screen as the next version, then go to Make. */
+  async function addVersion() {
+    if (!work || load.status !== 'ready' || !session) return;
+    const { ws } = load;
+    if (ws.example) {
+      // The café example is read-only: follow the prototype to Make without saving.
+      closeDialog();
+      return go('make');
+    }
+    const next = (ws.versions.at(-1)?.number ?? 0) + 1;
+    setBusy(true);
+    setReviewError(null);
+    const path = workPath(session.user.id, id, work, next);
+    const { error: uploadError } = await supabase.storage
+      .from('artifacts')
+      .upload(path, work.file, { contentType: work.type, upsert: false });
+    const { error: versionError } = uploadError
+      ? { error: null }
+      : await supabase.from('artifact_versions').insert({ project_id: id, file_ref: path, version_number: next });
+    if (uploadError || versionError) {
+      if (!uploadError) await supabase.storage.from('artifacts').remove([path]);
+      setBusy(false);
+      return setReviewError('Your screen could not be added. Check your connection, then try again.');
+    }
+    const { data: signed } = await supabase.storage.from('artifacts').createSignedUrl(path, 60 * 60);
+    setLoad({ status: 'ready', ws: { ...ws, versions: [...ws.versions, { number: next, uri: signed?.signedUrl ?? null }] } });
+    setVersion(next);
+    setBusy(false);
+    setDialog(null);
+    setWork(null);
+    go('make');
   }
 
   if (loading) return null;
@@ -103,7 +201,14 @@ export default function ProjectWorkspace() {
 
   const { ws } = load;
   const stage: Stage = step === 'explain' ? 'make' : step;
-  const { count } = versionsAt[step];
+  const count = ws.example ? versionsAt[step].count : Math.max(1, ws.versions.length);
+  const shown = ws.versions.find((v) => v.number === version);
+
+  const editItems = [
+    { label: 'Edit source', onPress: () => openDialog('source') },
+    { label: 'Add screenshot', onPress: () => openDialog('add') },
+    ...(step === 'brief' ? [{ label: 'Brief details', onPress: () => openDialog('brief') }] : []),
+  ];
 
   const next: Record<Step, { label: string; to?: Step; disabled?: boolean; arrow?: boolean; finish?: boolean }> = {
     brief: { label: 'Next: Make', to: 'make' },
@@ -119,16 +224,26 @@ export default function ProjectWorkspace() {
       <AppNav variant="workspace" />
 
       {/* R8 · Compact workspace header */}
-      <View className="h-navHeight flex-row items-center justify-between border-b border-border bg-white px-64">
+      <View
+        className="h-navHeight flex-row items-center justify-between border-b border-border bg-white px-64"
+        style={{ zIndex: 2 }}
+      >
         <Text numberOfLines={1} className="w-column font-semibold text-cardTitle text-ink">
           {ws.title}
         </Text>
         <StageNav current={stage} onChange={(s) => go(s)} />
         <View className="w-column flex-row items-center justify-end gap-12">
-          <Button label="Edit" variant="white" size="md" />
+          <View>
+            <Button label="Edit" variant="secondary" size="header" onPress={() => setEditOpen(!editOpen)} />
+            {editOpen && (
+              <View style={{ position: 'absolute', left: 0, top: size.editDropdownTop }}>
+                <EditDropdown items={editItems} />
+              </View>
+            )}
+          </View>
           <Button
             label={n.label}
-            size="md"
+            size="header"
             width={size.nextButton}
             arrow={n.arrow}
             leading={n.finish ? 'finish' : undefined}
@@ -146,11 +261,11 @@ export default function ProjectWorkspace() {
               <ReflectCompare example={ws.example} />
             ) : (
               <View style={{ width: size.artwork, height: size.artworkHeight }}>
-                {ws.example ? (
+                {ws.example || shown?.uri ? (
                   <Image
-                    source={cafe[version - 1]}
+                    source={ws.example ? cafe[version - 1] : { uri: shown?.uri ?? undefined }}
                     style={{ position: 'absolute', left: space[16], top: space[16], width: size.artworkImage, height: size.artworkImageHeight }}
-                    contentFit="cover"
+                    contentFit={ws.example ? 'cover' : 'contain'}
                   />
                 ) : (
                   <EmptyArtwork />
@@ -210,7 +325,13 @@ export default function ProjectWorkspace() {
               {step === 'brief' && (
                 <BriefPanel title={ws.example ? 'The café brief' : 'Your brief'} audience={ws.audience} goal={ws.goal} />
               )}
-              {step === 'make' && <MakePanel onTool={() => go('explain')} />}
+              {step === 'make' && (
+                <MakePanel
+                  version={`v${version} · Current`}
+                  onCritique={() => go('explain')}
+                  onCompare={() => go('explain')}
+                />
+              )}
               {step === 'explain' && <ExplainPanel tradeOff={tradeOff} onTradeOff={setTradeOff} onBack={() => go('make')} />}
               {step === 'revise' && <RevisePanel />}
               {step === 'reflect' && (
@@ -220,6 +341,50 @@ export default function ProjectWorkspace() {
           )}
         </View>
       </ScrollView>
+
+      {/* Edit menu · Click outside to close: covers the workspace below the header. */}
+      {editOpen && (
+        <Pressable
+          accessibilityLabel="Close edit menu"
+          onPress={() => setEditOpen(false)}
+          className="absolute bottom-0 left-0 right-0"
+          style={{ top: size.navHeight * 2, zIndex: 1 }}
+        />
+      )}
+
+      <EditSourceDialog
+        visible={dialog === 'source'}
+        goal={ws.example ? EXAMPLE_COPY.sameGoal : ws.goal}
+        onClose={closeDialog}
+        onAddScreenshot={() => openDialog('add')}
+      />
+      <AddScreenDialog
+        visible={dialog === 'add'}
+        error={addError}
+        onClose={closeDialog}
+        onChoose={chooseFile}
+        onDropFile={takeFile}
+      />
+      <ReviewScreen
+        work={dialog === 'review' ? work : null}
+        busy={busy}
+        error={reviewError}
+        onClose={closeDialog}
+        onReplace={chooseFile}
+        onChooseAnother={() => {
+          setWork(null);
+          setReviewError(null);
+          setDialog('add');
+        }}
+        onAdd={addVersion}
+      />
+      <BriefDetails
+        visible={dialog === 'brief'}
+        title={ws.example ? 'The café brief' : 'Your brief'}
+        audience={ws.audience}
+        goal={ws.example ? EXAMPLE_COPY.success : ws.goal}
+        onClose={closeDialog}
+      />
     </View>
   );
 }

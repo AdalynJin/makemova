@@ -16,8 +16,11 @@ export type IconName =
   | 'edit'
   | 'finish'
   | 'upload'
+  | 'uploadWhite'
   | 'x'
-  | 'image';
+  | 'image'
+  | 'bulb'
+  | 'book';
 
 const map = {
   help: [asset.iconHelp, s.iconMd],
@@ -32,8 +35,11 @@ const map = {
   edit: [asset.iconEdit, s.iconSmall],
   finish: [asset.iconFinish, s.iconSmall],
   upload: [asset.iconUpload, s.icon],
+  uploadWhite: [asset.iconUploadWhite, s.iconMd],
   x: [asset.iconX, s.icon],
   image: [asset.iconImage, s.iconSmall],
+  bulb: [asset.iconBulb, s.tutorialIcon],
+  book: [asset.iconBook, s.tutorialIcon],
 } as const;
 
 /** R4 icons exported from the Week 8 file. `size` overrides the default box. */

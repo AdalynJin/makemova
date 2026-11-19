@@ -1,4 +1,4 @@
-import { color, opacity, shadow } from '@/tokens';
+import { blur, color, opacity, shadow } from '@/tokens';
 
 /** Hex + alpha → rgba(), so shadows stay built from tokens. */
 export function alpha(hex: string, a: number) {
@@ -21,7 +21,18 @@ export const softShadow = {
 export const dialogShadow = {
   boxShadow: `0px ${shadow.dialog.offsetY}px ${shadow.dialog.blur}px ${shadow.dialog.spread}px ${alpha(color.dialogShadow, shadow.dialog.opacity)}, 0px ${shadow.dialog.nearOffsetY}px ${shadow.dialog.nearBlur}px ${alpha(color.dialogShadow, shadow.dialog.nearOpacity)}`,
 };
-export const scrim = { backgroundColor: alpha(color.ink, opacity.scrim) };
+export const scrim = {
+  backgroundColor: alpha(color.ink, opacity.scrim),
+  backdropFilter: `blur(${blur.scrim}px)`,
+} as object;
+/** R7 · Tools panel shadow (0 10 28, 14%). */
+export const toolsShadow = {
+  boxShadow: `0px ${shadow.tools.offsetY}px ${shadow.tools.blur}px ${alpha(color.toolsShadow, shadow.tools.opacity)}`,
+};
+/** MOVA · Hover preview shadow (0 8 24, 16%). */
+export const hoverShadow = {
+  boxShadow: `0px ${shadow.hover.offsetY}px ${shadow.hover.blur}px ${alpha(color.hoverShadow, shadow.hover.opacity)}`,
+};
 
 /** Every static Figma export the screens use. */
 export const asset = {
@@ -48,9 +59,15 @@ export const asset = {
   peekArtiInspect: require('@/assets/figma/peek-arti-inspect.png'),
   motionRevise: require('@/assets/figma/motion-revise.png'),
   motionReflect: require('@/assets/figma/motion-reflect.png'),
-  edgeCritique: require('@/assets/figma/tool-edge-critique.png'),
-  edgeCompare: require('@/assets/figma/tool-edge-compare.png'),
-  edgeTutorials: require('@/assets/figma/tool-edge-tutorials.png'),
+  edgeCritique: require('@/assets/figma/tool-edge-critique.svg'),
+  edgeCompare: require('@/assets/figma/tool-edge-compare.svg'),
+  edgeTutorials: require('@/assets/figma/tool-edge-tutorials.svg'),
+  motionCritique: require('@/assets/figma/motion-critique.svg'),
+  motionCompare: require('@/assets/figma/motion-compare.svg'),
+  motionTutorials: require('@/assets/figma/motion-tutorials.svg'),
+  motionDialogRevise: require('@/assets/figma/motion-dialog-revise.svg'),
+  iconBulb: require('@/assets/figma/icon-bulb.svg'),
+  iconBook: require('@/assets/figma/icon-book.svg'),
   shapeBrief: require('@/assets/figma/shape-brief.svg'),
   shapeMake: require('@/assets/figma/plan-studio.svg'),
   shapeRevise: require('@/assets/figma/shape-make.svg'),
@@ -81,6 +98,7 @@ export const asset = {
   iconEdit: require('@/assets/figma/icon-edit.svg'),
   iconFinish: require('@/assets/figma/icon-finish.svg'),
   iconUpload: require('@/assets/figma/icon-upload.svg'),
+  iconUploadWhite: require('@/assets/figma/icon-upload-white.svg'),
   iconX: require('@/assets/figma/icon-x.svg'),
   iconImage: require('@/assets/figma/icon-image.svg'),
   motionBrief: require('@/assets/figma/motion-brief.svg'),

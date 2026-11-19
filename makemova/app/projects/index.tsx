@@ -1,11 +1,14 @@
-import { Redirect, router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native';
+import { Redirect, router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { AppNav } from '@/components/AppNav';
 import { CrewMosaic } from '@/components/CrewMosaic';
 import { Button } from '@/components/Button';
 import { ChooseStart } from '@/components/ChooseStart';
+import { DeletedProjectToast } from '@/components/DeletedProjectToast';
+import { DeleteProjectConfirmation } from '@/components/DeleteProjectConfirmation';
+import { ProjectActions } from '@/components/ProjectActions';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import type { Project } from '@/lib/types';
@@ -28,6 +31,70 @@ export default function Projects() {
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [query, setQuery] = useState('');
   const [attempt, setAttempt] = useState(0);
+  // ⋯ → R5 · Project actions → R5 · Delete project confirmation → "Project deleted." with Undo.
+  const [actionsFor, setActionsFor] = useState<Project | null>(null);
+  const [confirmFor, setConfirmFor] = useState<Project | null>(null);
+  const [pending, setPending] = useState<Project | null>(null);
+  const [deletedAny, setDeletedAny] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const pendingRef = useRef<Project | null>(null);
+  pendingRef.current = pending;
+
+  /** Removes the project for real: its stored screens, then the row (versions and feedback cascade). */
+  const commitDelete = useCallback(
+    async (project: Project) => {
+      if (!userId) return;
+      const folder = `${userId}/${project.id}`;
+      const { data: files } = await supabase.storage.from('artifacts').list(folder);
+      if (files?.length) await supabase.storage.from('artifacts').remove(files.map((f) => `${folder}/${f.name}`));
+      const { error } = await supabase.from('projects').delete().eq('id', project.id).eq('owner_id', userId);
+      if (error) {
+        setDeleteError('This project could not be deleted. Try again.');
+        return;
+      }
+      setLoad((prev) =>
+        prev.status === 'ready' ? { ...prev, projects: prev.projects.filter((p) => p.id !== project.id) } : prev,
+      );
+    },
+    [userId],
+  );
+
+  /** Makes the waiting delete for real. Undo is gone once this runs. */
+  const flush = useCallback(() => {
+    const project = pendingRef.current;
+    if (!project) return;
+    pendingRef.current = null;
+    setPending(null);
+    void commitDelete(project);
+  }, [commitDelete]);
+
+  // Undo stays available while the toast shows; the delete is made when the designer leaves this page
+  // (another screen, closing the tab, or unmount).
+  useFocusEffect(useCallback(() => flush, [flush]));
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return flush;
+    window.addEventListener('pagehide', flush);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      flush();
+    };
+  }, [flush]);
+
+  function confirmDelete() {
+    const project = confirmFor;
+    if (!project) return;
+    flush();
+    setConfirmFor(null);
+    setDeleteError(null);
+    pendingRef.current = project;
+    setPending(project);
+    setDeletedAny(true);
+  }
+
+  function undoDelete() {
+    pendingRef.current = null;
+    setPending(null);
+  }
 
   useEffect(() => {
     if (!userId) return;
@@ -46,16 +113,20 @@ export default function Projects() {
     return () => { active = false; };
   }, [attempt, userId]);
 
+  const remaining = useMemo(
+    () => (load.status === 'ready' ? load.projects.filter((p) => p.id !== pending?.id) : []),
+    [load, pending],
+  );
   const shown = useMemo(() => {
-    if (load.status !== 'ready') return [];
     const q = query.trim().toLowerCase();
-    return q ? load.projects.filter((p) => p.title.toLowerCase().includes(q)) : load.projects;
-  }, [load, query]);
+    return q ? remaining.filter((p) => p.title.toLowerCase().includes(q)) : remaining;
+  }, [remaining, query]);
 
   if (loading) return null;
   if (!session) return <Redirect href="/sign-in" />;
 
-  const firstVisit = load.status === 'ready' && load.projects.length === 0;
+  const firstVisit = load.status === 'ready' && load.projects.length === 0 && !deletedAny;
+  const allDeleted = load.status === 'ready' && deletedAny && remaining.length === 0;
 
   return (
     <View className="flex-1 bg-paper">
@@ -106,7 +177,7 @@ export default function Projects() {
                 <View className="gap-8">
                   <Text className="font-bold text-pageTitle text-ink">My projects</Text>
                   <Text className="font-regular text-bodySmall text-secondaryText">
-                    {load.projects.length} {load.projects.length === 1 ? 'project' : 'projects'}
+                    {remaining.length} {remaining.length === 1 ? 'project' : 'projects'}
                   </Text>
                 </View>
                 <Button label="Start a project" width={size.startButton} onPress={() => router.push('/projects/new')} />
@@ -138,7 +209,13 @@ export default function Projects() {
                       <Text numberOfLines={1} className="flex-1 font-semibold text-cardTitle text-ink">
                         {p.title}
                       </Text>
-                      <Text className="px-8 font-bold text-labelUi text-secondaryText">···</Text>
+                      <Button
+                        label="⋯"
+                        variant="quiet"
+                        size="sm"
+                        width={size.controlSmall}
+                        onPress={() => setActionsFor(p)}
+                      />
                     </View>
                     <Text className="font-regular text-bodySmall text-secondaryText">
                       Brief · v1 · {edited(p.created_at)}
@@ -152,10 +229,23 @@ export default function Projects() {
                     />
                   </View>
                 ))}
-                {shown.length === 0 && (
+                {shown.length === 0 && !allDeleted && (
                   <Text className="font-regular text-bodyUi text-secondaryText">No projects match “{query}”.</Text>
                 )}
               </View>
+
+              {/* Figma: No projects yet — shown once the last project is deleted. */}
+              {allDeleted && (
+                <View className="gap-12 bg-paper p-32">
+                  <Text className="font-bold text-heading text-ink">Start your first project.</Text>
+                  <Text className="font-regular text-bodyUi text-secondaryText">
+                    Choose the café brief or bring a screen you want to improve.
+                  </Text>
+                  <Button label="Start a project" width={size.startButton} onPress={() => router.push('/projects/new')} />
+                </View>
+              )}
+              {pending && <DeletedProjectToast onUndo={undoDelete} />}
+              {deleteError && <DeletedProjectToast message={deleteError} />}
 
               <View className="mt-12 border-t border-border" />
               <View className="gap-4 pb-28">
@@ -169,6 +259,20 @@ export default function Projects() {
           )}
         </ScrollView>
       </View>
+
+      <ProjectActions
+        visible={!!actionsFor}
+        onClose={() => setActionsFor(null)}
+        onDelete={() => {
+          setConfirmFor(actionsFor);
+          setActionsFor(null);
+        }}
+      />
+      <DeleteProjectConfirmation
+        project={confirmFor?.title ?? null}
+        onConfirm={confirmDelete}
+        onClose={() => setConfirmFor(null)}
+      />
     </View>
   );
 }

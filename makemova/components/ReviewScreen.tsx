@@ -9,6 +9,8 @@ import { describeWork, type Work } from '@/lib/work';
 
 type Props = {
   work: Work | null;
+  title?: string;
+  description?: string;
   busy?: boolean;
   error?: string | null;
   onClose: () => void;
@@ -21,15 +23,19 @@ type Props = {
  * Figma: R4 · Dialog · Review screen (11125:60453).
  * Prototype: Choose another → back to Flow B · CH01; Add to project → Flow B · CH02 · Brief.
  */
-export function ReviewScreen({ work, busy, error, onClose, onReplace, onChooseAnother, onAdd }: Props) {
+export function ReviewScreen({
+  work,
+  title = 'Review your first screen',
+  description = 'This becomes your first saved attempt.',
+  busy, error, onClose, onReplace, onChooseAnother, onAdd }: Props) {
   return (
     <DialogPage visible={!!work} onClose={busy ? () => {} : onClose}>
       {work && (
         <>
           <View className="px-24 pb-16 pt-24">
             <ModalHeader
-              title="Review your first screen"
-              description="This becomes your first saved attempt."
+              title={title}
+              description={description}
               onClose={busy ? () => {} : onClose}
             />
           </View>
