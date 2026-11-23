@@ -17,7 +17,7 @@ import { BriefPanel, ExplainPanel, MakePanel, ReflectPanel, RevisePanel } from '
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { asset } from '@/lib/ui';
-import { WORK_UNAVAILABLE, checkWork, pickWorkFile, releaseWork, workPath, type Work } from '@/lib/work';
+import { WORK_UNAVAILABLE, checkWork, pickWorkFile, releaseWork, uploadErrorText, workPath, type Work } from '@/lib/work';
 import { color, size, space } from '@/tokens';
 
 /** Explain is a step inside Make: the stage nav still shows Make. */
@@ -196,7 +196,9 @@ export default function ProjectWorkspace() {
     if (uploadError || versionError) {
       if (!uploadError) await supabase.storage.from('artifacts').remove([path]);
       setBusy(false);
-      return setReviewError('Your screen could not be added. Check your connection, then try again.');
+      return setReviewError(
+        uploadErrorText(uploadError, 'Your screen could not be added. Check your connection, then try again.'),
+      );
     }
     const { data: signed } = await supabase.storage.from('artifacts').createSignedUrl(path, 60 * 60);
     setLoad({

@@ -20,6 +20,14 @@ export type Work = {
 export const WORK_ERROR = 'Choose a PNG or JPG under 10 MB, then try again.';
 export const WORK_UNAVAILABLE = 'Uploading works in the web app for now.';
 
+/** The sentence for a failed upload: a file storage refuses for its size is not a connection problem. */
+export function uploadErrorText(error: unknown, fallback: string) {
+  const e = error as { message?: string; statusCode?: string | number; status?: number } | null;
+  const tooLarge =
+    String(e?.statusCode ?? '') === '413' || e?.status === 413 || /maximum allowed size|too large/i.test(e?.message ?? '');
+  return tooLarge ? 'This file is too large to upload. Choose a smaller PNG or JPG, then try again.' : fallback;
+}
+
 /** Turns a browser File into Work, or returns the sentence to show. */
 export function checkWork(file: File): Work | string {
   const type = WORK_TYPES.find((t) => t === file.type);

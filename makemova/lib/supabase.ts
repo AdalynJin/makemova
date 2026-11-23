@@ -27,3 +27,16 @@ if (Platform.OS !== 'web') {
     else supabase.auth.stopAutoRefresh();
   });
 }
+
+/**
+ * Deletes one row with a request that outlives the page (web, while the tab closes).
+ * RLS still decides what the signed-in designer may delete.
+ */
+export function deleteRowOnLeave(table: string, id: string, accessToken: string) {
+  if (!url || !publishableKey) return;
+  void fetch(`${url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    keepalive: true,
+    headers: { apikey: publishableKey, Authorization: `Bearer ${accessToken}` },
+  }).catch(() => undefined);
+}

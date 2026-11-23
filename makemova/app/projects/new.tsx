@@ -23,6 +23,7 @@ import {
   describeWork,
   pickWorkFile,
   releaseWork,
+  uploadErrorText,
   workPath,
   type Work,
 } from '@/lib/work';
@@ -173,7 +174,7 @@ export default function NewProject() {
         : await supabase.from('artifact_versions').insert({ project_id: data.id, file_ref: path, version_number: 1 });
       if (uploadError || versionError) {
         await supabase.from('projects').delete().eq('id', data.id);
-        return fail('Your work could not be uploaded. Check your connection, then try again.');
+        return fail(uploadErrorText(uploadError, 'Your work could not be uploaded. Check your connection, then try again.'));
       }
     }
 

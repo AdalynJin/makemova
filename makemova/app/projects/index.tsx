@@ -10,6 +10,7 @@ import { DeletedProjectToast } from '@/components/DeletedProjectToast';
 import { DeleteProjectConfirmation } from '@/components/DeleteProjectConfirmation';
 import { ProjectActions } from '@/components/ProjectActions';
 import { useAuth } from '@/lib/auth';
+import { deleteOnLeave, deleteProject, finishDeletes } from '@/lib/deletes';
 import { supabase } from '@/lib/supabase';
 import type { Project } from '@/lib/types';
 import { softShadow } from '@/lib/ui';
@@ -28,6 +29,8 @@ function edited(iso: string) {
 export default function Projects() {
   const { session, loading } = useAuth();
   const userId = session?.user.id;
+  const tokenRef = useRef<string | undefined>(undefined);
+  tokenRef.current = session?.access_token;
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [query, setQuery] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -40,45 +43,50 @@ export default function Projects() {
   const pendingRef = useRef<Project | null>(null);
   pendingRef.current = pending;
 
-  /** Removes the project for real: its stored screens, then the row (versions and feedback cascade). */
-  const commitDelete = useCallback(
-    async (project: Project) => {
-      if (!userId) return;
-      const folder = `${userId}/${project.id}`;
-      const { data: files } = await supabase.storage.from('artifacts').list(folder);
-      if (files?.length) await supabase.storage.from('artifacts').remove(files.map((f) => `${folder}/${f.name}`));
-      const { error } = await supabase.from('projects').delete().eq('id', project.id).eq('owner_id', userId);
-      if (error) {
-        setDeleteError('This project could not be deleted. Try again.');
-        return;
-      }
-      setLoad((prev) =>
-        prev.status === 'ready' ? { ...prev, projects: prev.projects.filter((p) => p.id !== project.id) } : prev,
-      );
-    },
-    [userId],
-  );
-
-  /** Makes the waiting delete for real. Undo is gone once this runs. */
-  const flush = useCallback(() => {
+  /** Takes the waiting project off the list for good. Undo is gone once this runs. */
+  const takePending = useCallback(() => {
     const project = pendingRef.current;
-    if (!project) return;
+    if (!project) return null;
     pendingRef.current = null;
     setPending(null);
-    void commitDelete(project);
-  }, [commitDelete]);
+    setLoad((prev) =>
+      prev.status === 'ready' ? { ...prev, projects: prev.projects.filter((p) => p.id !== project.id) } : prev,
+    );
+    return project;
+  }, []);
+
+  /** Makes the waiting delete for real. If it fails, the list reloads with the project back on it. */
+  const flush = useCallback(() => {
+    if (!userId) return;
+    const project = takePending();
+    if (!project) return;
+    void deleteProject(userId, project.id)
+      .catch(() => false)
+      .then((done) => {
+        if (done) return;
+        setDeleteError('This project could not be deleted. Try again.');
+        setAttempt((value) => value + 1);
+      });
+  }, [takePending, userId]);
+
+  /** The tab is closing, so the delete must not wait for anything. */
+  const flushOnLeave = useCallback(() => {
+    if (!userId || !tokenRef.current) return;
+    const project = takePending();
+    if (project) deleteOnLeave(userId, project.id, tokenRef.current);
+  }, [takePending, userId]);
 
   // Undo stays available while the toast shows; the delete is made when the designer leaves this page
   // (another screen, closing the tab, or unmount).
   useFocusEffect(useCallback(() => flush, [flush]));
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return flush;
-    window.addEventListener('pagehide', flush);
+    window.addEventListener('pagehide', flushOnLeave);
     return () => {
-      window.removeEventListener('pagehide', flush);
+      window.removeEventListener('pagehide', flushOnLeave);
       flush();
     };
-  }, [flush]);
+  }, [flush, flushOnLeave]);
 
   function confirmDelete() {
     const project = confirmFor;
@@ -99,17 +107,19 @@ export default function Projects() {
   useEffect(() => {
     if (!userId) return;
     let active = true;
-    // RLS returns only the signed-in designer's own projects.
-    void supabase
-      .from('projects')
-      .select('id, owner_id, title, status, skill_focus, created_at')
-      .eq('owner_id', userId)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (!active) return;
-        if (error) setLoad({ status: 'error', message: error.message });
-        else setLoad({ status: 'ready', projects: data ?? [] });
-      });
+    void (async () => {
+      // Deletes a closed tab cut short come first, so those projects never reappear.
+      const hidden = await finishDeletes(userId);
+      // RLS returns only the signed-in designer's own projects.
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, owner_id, title, status, skill_focus, created_at')
+        .eq('owner_id', userId)
+        .order('created_at', { ascending: false });
+      if (!active) return;
+      if (error) setLoad({ status: 'error', message: error.message });
+      else setLoad({ status: 'ready', projects: (data ?? []).filter((p) => !hidden.includes(p.id)) });
+    })();
     return () => { active = false; };
   }, [attempt, userId]);
 
