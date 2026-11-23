@@ -1,4 +1,4 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -9,7 +9,9 @@ import { Button } from '@/components/Button';
 import { ChoiceOption } from '@/components/ChoiceOption';
 import { Dropzone } from '@/components/Dropzone';
 import { FileChip } from '@/components/FileChip';
+import { GuidanceOptions } from '@/components/GuidanceOptions';
 import { Icon } from '@/components/Icon';
+import { QuickGuide } from '@/components/QuickGuide';
 import { ReviewScreen } from '@/components/ReviewScreen';
 import { Sticker } from '@/components/Sticker';
 import { UploadTips } from '@/components/UploadTips';
@@ -55,11 +57,22 @@ const copy = {
   },
 } as const;
 
+/** Shared · Explore practice templates → Tandem. Flow C is not built yet, so its brief pre-fills Flow A set-up. */
+const templateBriefs = {
+  tandem: {
+    name: 'Tandem app icon',
+    audience: 'People scanning a busy home screen',
+    goal: 'Keep the icon clear at small sizes',
+  },
+} as const;
+
 export default function NewProject() {
   const { session, loading } = useAuth();
-  const [name, setName] = useState('');
-  const [audience, setAudience] = useState('');
-  const [goal, setGoal] = useState('');
+  const { template } = useLocalSearchParams<{ template?: string }>();
+  const preset = template === 'tandem' ? templateBriefs.tandem : null;
+  const [name, setName] = useState<string>(preset?.name ?? '');
+  const [audience, setAudience] = useState<string>(preset?.audience ?? '');
+  const [goal, setGoal] = useState<string>(preset?.goal ?? '');
   const [level, setLevel] = useState<(typeof guidance)[number]>('More guidance');
   const [start, setStart] = useState<Start>('brief');
   const [busy, setBusy] = useState(false);
@@ -68,6 +81,8 @@ export default function NewProject() {
   const [reviewing, setReviewing] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [tipsOpen, setTipsOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => () => releaseWork(work), [work]);
 
@@ -190,15 +205,16 @@ export default function NewProject() {
                 <Text className="font-regular text-bodyUi text-secondaryText">{t.lead}</Text>
               </View>
               <View className="pb-8">
-                <Button label="Four-stage guide" variant="white" size="sm" />
+                <Button label="Four-stage guide" variant="white" size="sm" onPress={() => setGuideOpen(true)} />
               </View>
             </View>
 
             <View className="gap-24 rounded-14 border border-border bg-white p-32" style={cardShadow}>
+              {/* Figma: Flow A · Mate · Move it; Flow B · Mate · Make. Feet on the card's top edge. */}
               <Sticker
-                crew="mateEncourage"
-                width={size.setupMate}
-                style={{ position: 'absolute', left: size.setupMateLeft, top: size.setupMateTop }}
+                crew={start === 'screen' ? 'mateMake' : 'mateMoveIt'}
+                width={start === 'screen' ? size.setupMateMake : size.setupMateMoveIt}
+                style={{ position: 'absolute', left: start === 'screen' ? size.setupMateMakeLeft : size.setupMateMoveItLeft, bottom: '100%' }}
               />
               <View className="gap-16">
                 <Text className="font-semibold text-cardTitle text-ink">{t.section}</Text>
@@ -226,7 +242,7 @@ export default function NewProject() {
               <View className="gap-16">
                 <View className="flex-row items-center justify-between">
                   <Text className="font-semibold text-cardTitle text-ink">2 · Guidance</Text>
-                  <Button label="Help choosing" variant="quiet" size="sm" />
+                  <Button label="Help choosing" variant="quiet" size="sm" onPress={() => setHelpOpen(true)} />
                 </View>
                 <View className="flex-row gap-12">
                   {guidance.map((g) => (
@@ -294,6 +310,8 @@ export default function NewProject() {
       </View>
 
       <UploadTips visible={tipsOpen} onClose={() => setTipsOpen(false)} />
+      <QuickGuide visible={guideOpen} onClose={() => setGuideOpen(false)} />
+      <GuidanceOptions visible={helpOpen} value={level} onChange={setLevel} onClose={() => setHelpOpen(false)} />
       <ReviewScreen
         work={reviewing ? work : null}
         busy={busy}

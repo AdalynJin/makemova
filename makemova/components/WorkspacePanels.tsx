@@ -7,6 +7,8 @@ import { ChooseCritiqueFocus, type CritiqueFocus } from '@/components/ChooseCrit
 import { ConfirmCritique } from '@/components/ConfirmCritique';
 import { CritiqueRequest } from '@/components/CritiqueRequest';
 import { Icon } from '@/components/Icon';
+import { Motion } from '@/components/Motion';
+import { Sticker } from '@/components/Sticker';
 import { MovaToolCard, type Tool } from '@/components/MovaToolCard';
 import { ToolHoverPreview } from '@/components/ToolHoverPreview';
 import { TutorialsDialog } from '@/components/TutorialsDialog';
@@ -34,16 +36,7 @@ function Caps({ children }: { children: string }) {
 export function BriefPanel({ title, audience, goal }: { title: string; audience: string; goal: string }) {
   return (
     <View>
-      <Image
-        source={asset.peekMateGoal}
-        style={{
-          position: 'absolute',
-          left: size.peekGoalLeft,
-          top: -size.peekMateGoalHeight,
-          width: size.peekMateGoal,
-          height: size.peekMateGoalHeight,
-        }}
-      />
+      <Sticker crew="mateSetTheGoal" width={size.peekMateGoal} style={{ position: 'absolute', left: size.peekGoalLeft, bottom: '100%' }} />
       <View className={`${surface} pb-40`} style={cardShadow}>
         <Text className="font-bold text-briefTitle text-ink">{title}</Text>
         <View className="gap-8">
@@ -236,10 +229,7 @@ export function RevisePanel() {
       <View className="gap-6 pr-64">
         <Text className="font-bold text-heading text-ink">Revise one thing</Text>
         <Text className="font-regular text-labelUi text-secondaryText">Keep pickup strong and make the menu easier to find.</Text>
-        <Image
-          source={asset.motionRevise}
-          style={{ position: 'absolute', right: -space[8], top: -space[8], width: size.motionRevise, height: size.motionReviseHeight }}
-        />
+        <Motion name="revise" width={size.motionRevise} style={{ position: 'absolute', right: -space[8], top: -space[8] }} />
       </View>
       <View className="flex-row items-center gap-10">
         <Caps>STARTING VERSION</Caps>
@@ -292,16 +282,10 @@ export function ReflectPanel({ onBack, onFinish }: { onBack: () => void; onFinis
   );
   return (
     <View>
-      <Image
-        source={asset.motionReflect}
-        style={{
-          position: 'absolute',
-          right: space[64],
-          top: -size.motionReflectHeight + space[28],
-          width: size.motionReflect,
-          height: size.motionReflectHeight,
-          zIndex: 1,
-        }}
+      <Motion
+        name="reflect"
+        width={size.motionReflect}
+        style={{ position: 'absolute', right: space[64], top: -size.motionReflectHeight + space[28], zIndex: 1 }}
       />
       <View className={surface} style={cardShadow}>
         <Text className="font-bold text-heading text-ink">Keep one useful lesson</Text>

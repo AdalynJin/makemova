@@ -24,7 +24,7 @@ function edited(iso: string) {
   return `edited ${days} days ago`;
 }
 
-/** Figma: Flow A · My projects (10551:5427) and first visit (10551:5656) */
+/** Figma: R5 · My projects · Compact cards (11125:41069) and CH01b · My projects · First visit (11125:41239) */
 export default function Projects() {
   const { session, loading } = useAuth();
   const userId = session?.user.id;
@@ -166,7 +166,9 @@ export default function Projects() {
                 <Text className="font-regular text-bodyUi text-secondaryText">
                   A quick critique costs 5 credits per version. You confirm before it runs.
                 </Text>
-                <Text className="font-semibold text-labelUi text-ink">See every AI credit rate →</Text>
+                <Text accessibilityRole="link" onPress={() => router.push('/account/credits')} className="font-semibold text-labelUi text-ink">
+                  See every AI credit rate →
+                </Text>
               </View>
             </View>
           )}

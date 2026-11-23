@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
+import { QuickGuide } from '@/components/QuickGuide';
 import { Wordmark } from '@/components/Wordmark';
 import { useAuth } from '@/lib/auth';
 
@@ -16,6 +18,7 @@ type Props = {
 export function PublicNav({ variant = 'account', onSection }: Props) {
   const { session } = useAuth();
   const home = variant === 'home';
+  const [guide, setGuide] = useState(false);
   const link = home ? 'font-medium text-nav text-ink' : 'font-medium text-labelUi text-secondaryText';
   const go = (id: 'how' | 'example' | 'plans') => (onSection ? onSection(id) : router.push(`/#${id}` as never));
   return (
@@ -41,7 +44,7 @@ export function PublicNav({ variant = 'account', onSection }: Props) {
         </View>
       </View>
       <View className={`flex-row items-center ${home ? 'gap-24' : 'gap-20'}`}>
-        <Pressable accessibilityRole="button" className="flex-row items-center gap-6">
+        <Pressable accessibilityRole="button" onPress={() => setGuide(true)} className="flex-row items-center gap-6">
           <Icon name="help" />
           <Text className={home ? 'font-medium text-nav text-ink' : 'font-medium text-labelUi text-secondaryText'}>
             Quick guide
@@ -68,6 +71,7 @@ export function PublicNav({ variant = 'account', onSection }: Props) {
           </>
         )}
       </View>
+      <QuickGuide visible={guide} onClose={() => setGuide(false)} />
     </View>
   );
 }

@@ -1,9 +1,12 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
+import { QuickGuide } from '@/components/QuickGuide';
 import { Wordmark } from '@/components/Wordmark';
 import { useAuth } from '@/lib/auth';
+import { credits } from '@/lib/credits';
 import { supabase } from '@/lib/supabase';
 import { size } from '@/tokens';
 
@@ -23,6 +26,7 @@ function initials(name?: string | null, email?: string | null) {
 export function AppNav({ variant = 'projects' }: Props) {
   const { session } = useAuth();
   const meta = session?.user.user_metadata as { display_name?: string } | undefined;
+  const [guide, setGuide] = useState(false);
   return (
     <View className="h-navHeight flex-row items-center justify-between border-b border-border bg-white px-64">
       <View className="flex-row items-center gap-20">
@@ -37,14 +41,18 @@ export function AppNav({ variant = 'projects' }: Props) {
         </Pressable>
       </View>
       <View className="flex-row items-center gap-20">
-        <Pressable accessibilityRole="button" className="flex-row items-center gap-6">
+        <Pressable accessibilityRole="button" onPress={() => setGuide(true)} className="flex-row items-center gap-6">
           <Icon name="help" />
           <Text className="font-medium text-labelUi text-secondaryText">Quick guide</Text>
         </Pressable>
-        <View className="h-controlSmall flex-row items-center gap-6 rounded-10 border border-border bg-white px-12">
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => router.push('/account/credits')}
+          className="h-controlSmall flex-row items-center gap-6 rounded-10 border border-border bg-white px-12"
+        >
           <Icon name="zap" />
-          <Text className="font-semibold text-labelUi text-ink">368 credits</Text>
-        </View>
+          <Text className="font-semibold text-labelUi text-ink">{`${credits.remaining} credits`}</Text>
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Account · sign out"
@@ -59,6 +67,7 @@ export function AppNav({ variant = 'projects' }: Props) {
           </Text>
         </Pressable>
       </View>
+      <QuickGuide visible={guide} onClose={() => setGuide(false)} />
     </View>
   );
 }

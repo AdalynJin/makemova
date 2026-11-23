@@ -1,19 +1,20 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useRef, type ReactNode } from 'react';
+import { useRef } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { CrewMosaic } from '@/components/CrewMosaic';
 import { PublicNav } from '@/components/PublicNav';
+import { HeroMate } from '@/components/HeroMate';
 import { Sticker, type Crew } from '@/components/Sticker';
 import { useAuth } from '@/lib/auth';
-import { asset, cardShadow, previewShadow, softShadow } from '@/lib/ui';
+import { asset, cardShadow } from '@/lib/ui';
 import { opacity, radius, size, space } from '@/tokens';
 
 type Section = 'how' | 'example' | 'plans';
 
-/** Figma: Homepage (10551:4788) */
+/** Figma: CH00 · Welcome · Homepage v3 (Refined 11125:38701) */
 export default function Home() {
   const { session } = useAuth();
   const scroll = useRef<{ scrollTo: (o: { y: number; animated: boolean }) => void } | null>(null);
@@ -40,7 +41,7 @@ export default function Home() {
         <CrewSection />
         <Tools />
         <View onLayout={(event) => mark('plans', event)}>
-          <Plans onStart={start} />
+          <Plans onPlan={(name) => (name === 'Free Preview' ? start() : router.push(session ? '/account/plans' : '/create-account'))} />
         </View>
         <Faq />
         <Cta onStart={start} onExample={example} />
@@ -53,14 +54,6 @@ export default function Home() {
 function Eyebrow({ children, light }: { children: string; light?: boolean }) {
   return <Text className={`font-bold text-eyebrow ${light ? 'text-onDarkMuted' : 'text-ink'}`}>{children}</Text>;
 }
-
-/** Figma: Homepage v3 "Follow a clear project path" marks, exported as SVG (16 wide). */
-const path = [
-  { label: 'Brief', icon: asset.pathBrief, h: size.pathHalfDisc },
-  { label: 'Make', icon: asset.pathMake, h: size.pathTriangle },
-  { label: 'Revise', icon: asset.pathRevise, h: size.pathTriangle },
-  { label: 'Reflect', icon: asset.pathReflect, h: size.iconSmall },
-];
 
 function Hero({ onStart, onExample }: { onStart: () => void; onExample: () => void }) {
   return (
@@ -79,27 +72,22 @@ function Hero({ onStart, onExample }: { onStart: () => void; onExample: () => vo
           borderTopRightRadius: radius.arch,
         }}
       >
-        <View
-          className="overflow-hidden rounded-24 bg-white"
-          style={[
-            {
-              position: 'absolute',
-              left: size.heroPreviewLeft,
-              top: size.heroPreviewTop,
-              width: size.heroPreview,
-              height: size.heroPreviewHeight,
-            },
-            previewShadow,
-          ]}
-        >
-          <Image source={asset.heroPreview} style={{ width: size.heroPreview, height: size.heroPreviewHeight }} contentFit="fill" />
-        </View>
-        <Sticker crew="mate" width={size.heroMate} style={{ position: 'absolute', left: size.heroMateLeft, top: size.heroMateTop }} />
+        {/* Figma: Workspace preview (11125:38771), exported with its 0 24 48 shadow. */}
+        <Image
+          source={asset.heroPreview}
+          accessibilityLabel="Campus café ordering at Make, v2, with feedback on your screen"
+          style={{
+            position: 'absolute',
+            left: size.heroPreviewArtLeft,
+            top: size.heroPreviewArtTop,
+            width: size.heroPreviewArt,
+            height: size.heroPreviewArtHeight,
+          }}
+          contentFit="fill"
+        />
       </View>
-      <View
-        className="rounded-pill bg-guidance"
-        style={{ position: 'absolute', right: space[36], top: space[36], width: size.heroDot, height: size.heroDot }}
-      />
+      {/* Figma: Hero · Mate looks (interactive). Mate's eyes follow the pointer across the hero. */}
+      <HeroMate />
       {/* Figma: Homepage v3 hero copy column. Each block sits at its Figma y, less the 81 nav. */}
       <View style={{ position: 'absolute', left: space[64], top: size.heroEyebrowTop }}>
         <Eyebrow>GUIDED DESIGN PRACTICE</Eyebrow>
@@ -128,46 +116,24 @@ function Hero({ onStart, onExample }: { onStart: () => void; onExample: () => vo
         <Image source={asset.checkInk} style={{ width: size.check, height: size.checkHeight }} />
         <Text className="font-medium text-labelUi text-secondaryText">One free critique. No card needed.</Text>
       </View>
-      <View
-        className="w-heroDivider border-t border-border"
-        style={{ position: 'absolute', left: space[64], top: size.heroDividerTop }}
-      />
-      <Text className="font-bold text-labelUi text-ink" style={{ position: 'absolute', left: space[64], top: size.heroPathLabelTop }}>
-        Follow a clear project path
-      </Text>
-      <View className="flex-row items-center" style={{ position: 'absolute', left: space[64], top: size.heroPathTop }}>
-        {path.map((p, i) => (
-          <View key={p.label} className="flex-row items-center">
-            <Image source={p.icon} style={{ width: size.iconSmall, height: p.h }} contentFit="fill" />
-            <Text className="ml-8 font-medium text-nav text-ink">{p.label}</Text>
-            {i < path.length - 1 && (
-              <Image
-                source={asset.pathArrow}
-                style={{ marginLeft: space[10], marginRight: space[20], width: size.pathArrow, height: size.pathArrowHeight }}
-                contentFit="fill"
-              />
-            )}
-          </View>
-        ))}
-      </View>
     </View>
   );
 }
 
 const values = [
-  { icon: asset.shapeBrief, w: size.shape, h: size.halfCircleHeight, title: 'Start with one screen', body: 'Bring your own work or use the café brief. No setup needed.' },
-  { icon: asset.shapeMake, w: size.shape, h: size.triangleLargeHeight, title: 'Ask about one decision', body: 'Feedback points to your screen and explains one principle.' },
-  { icon: asset.shapeReflect, w: size.shape, h: size.shape, title: 'Keep your reasoning', body: 'Every version and the reason you chose it stay saved.' },
+  { title: 'Follow a clear project path', body: 'Brief → Make → Revise → Reflect' },
+  { title: 'Ask about the work in front of you', body: 'Add a screenshot and choose one decision to work on.' },
+  { title: 'Keep your reasoning and revisions', body: 'Save each attempt and one useful takeaway.' },
 ];
 
+/** Figma: Value strip (11125:38848) */
 function ValueStrip() {
   return (
-    <View className="justify-center gap-48 bg-white px-64" style={{ height: size.valueHeight }}>
+    <View className="justify-center gap-36 bg-white px-64" style={{ height: size.valueStripHeight }}>
       <Text className="font-bold text-headline text-ink">One project. Four stages.{'\n'}Help only where you need it.</Text>
       <View className="flex-row gap-32">
         {values.map((v) => (
-          <View key={v.title} className="w-column gap-12 border-t border-border pt-20">
-            <Image source={v.icon} style={{ width: v.w, height: v.h }} contentFit="contain" />
+          <View key={v.title} className="w-valueColumn gap-8 border-t border-border pt-32">
             <Text className="font-bold text-h4 text-ink">{v.title}</Text>
             <Text className="font-regular text-bodyLarge text-secondaryText">{v.body}</Text>
           </View>
@@ -177,212 +143,151 @@ function ValueStrip() {
   );
 }
 
-function Chip({ children, dark }: { children: string; dark?: boolean }) {
-  return (
-    <View className={`self-start rounded-pill px-14 py-6 ${dark ? 'bg-ink' : 'bg-white'}`}>
-      <Text className={`font-semibold text-labelUi ${dark ? 'text-white' : 'text-ink'}`}>{children}</Text>
-    </View>
-  );
-}
-
-function Visual({ bg, children, sticker }: { bg: string; children: ReactNode; sticker: Crew }) {
-  return (
-    <View className={`w-visual h-visualHeight justify-center gap-16 overflow-hidden rounded-32 p-40 ${bg}`}>
-      {children}
-      <Sticker crew={sticker} size={size.crewSticker} style={{ position: 'absolute', right: space[24], top: space[24] }} />
-    </View>
-  );
-}
-
+/**
+ * Figma: How it works steps. Each visual (11125:38872, 38958, 39038) is exported from the Refined frame,
+ * characters included, so the mock screens and stickers match the design exactly.
+ */
 const steps = [
   {
-    n: 1,
-    badge: 'bg-mateOrange',
+    badge: asset.step1,
     title: 'Bring your work',
     body: 'Start the café brief or bring your own screen.',
     sub: 'Know your next step',
     subBody: 'A brief, a stage goal, and one practical task.',
-    visual: (
-      <Visual bg="bg-mateOrange" sticker="mate">
-        <View className="w-column gap-8 rounded-16 bg-white p-16" style={softShadow}>
-          <Text className="font-bold text-h4 text-ink">The café brief</Text>
-          <View className="flex-row gap-6">
-            {['Students', 'Pickup first', '8am rush'].map((t) => (
-              <View key={t} className="rounded-pill bg-chip px-10 py-4">
-                <Text className="font-medium text-labelSmall text-ink">{t}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-        <Image source={asset.cafe1} style={{ width: size.visualImage, height: size.visualImageHeight, borderRadius: radius[14] }} />
-        <View className="flex-row gap-8">
-          <Chip>↑ cafe-home-v1.png</Chip>
-          <Chip dark>Goal · pickup easy to find</Chip>
-        </View>
-      </Visual>
-    ),
+    art: asset.visualBring,
+    label: 'The café brief beside the café screen, with Mate on the brief card',
+    height: size.visualBringHeight,
+    artWidth: size.visualWidth,
+    artTop: size.visualBringArtTop,
   },
   {
-    n: 2,
-    badge: 'bg-artiBlue',
+    badge: asset.step2,
     title: 'Ask about one decision',
     body: 'Feedback points to your screen and explains one principle.',
     sub: 'Understand the feedback',
-    subBody: 'AI points to your work and explains one design principle.',
-    visual: (
-      <Visual bg="bg-artiBlue" sticker="arti">
-        <View className="flex-row items-center gap-16">
-          <View className="rounded-16 bg-white p-10">
-            <Image source={asset.cafe2} style={{ width: size.askImage, height: size.askImageHeight, borderRadius: radius[10] }} />
-            <View
-              className="h-pinDot w-pinDot items-center justify-center rounded-pill bg-versaPink"
-              style={{ position: 'absolute', left: size.pinLeft, top: size.pinTop }}
-            >
-              <Text className="font-bold text-labelUi text-ink">1</Text>
-            </View>
-          </View>
-          <View className="flex-1 gap-10 rounded-16 bg-ink p-16">
-            <Text className="font-bold text-nav text-white">Does pickup stand out?</Text>
-            <Text className="font-semibold text-labelUi text-white">Pickup reads first.</Text>
-            <Text className="font-regular text-bodySmall text-onDarkMuted">
-              “Order pickup” is the only filled button, so it reads first. Is “View menu” still easy to find?
-            </Text>
-            <View className="self-start rounded-pill bg-opusYellow px-12 py-6">
-              <Text className="font-semibold text-labelSmall text-ink">You decide what to change</Text>
-            </View>
-          </View>
-        </View>
-      </Visual>
-    ),
+    subBody: 'See which part of your screen to change and why.',
+    art: asset.visualAsk,
+    label: 'A feedback pin on the café screen: does pickup stand out? Arti looks closer.',
+    height: size.visualAskHeight,
+    artWidth: size.visualAskArt,
+    artTop: size.visualAskArtTop,
   },
   {
-    n: 3,
-    badge: 'bg-versaPink',
+    badge: asset.step3,
     title: 'Compare, revise, reflect',
     body: 'Compare two directions, save your pick and why.',
     sub: 'See how you improved',
-    subBody: 'Compare attempts, save your reasoning, and reflect.',
-    visual: (
-      <Visual bg="bg-versaPink" sticker="versa">
-        <View className="flex-row gap-16">
-          <View className="gap-8">
-            <Image source={asset.cafe2} style={{ width: size.compareThumb, height: size.compareThumbHeight, borderRadius: radius[10] }} />
-            <Chip>v2 · Alternative</Chip>
-          </View>
-          <View className="gap-8">
-            <View className="rounded-14 border-chosen border-ink">
-              <Image source={asset.cafe3} style={{ width: size.compareThumb, height: size.compareThumbHeight, borderRadius: radius[10] }} />
-            </View>
-            <Chip dark>✓ v3 · chosen</Chip>
-          </View>
-        </View>
-        <View className="gap-8 rounded-16 bg-white p-20">
-          <Text className="font-bold text-eyebrow text-secondaryText">KEEP ONE USEFUL LESSON</Text>
-          <Text className="font-medium text-lesson text-ink">
-            Give one action the most contrast; make the second one quieter, not hidden.
-          </Text>
-        </View>
-      </Visual>
-    ),
+    subBody: 'Save the version you chose and one lesson for next time.',
+    art: asset.visualCompare,
+    label: 'v2 and the chosen v3 side by side, with one useful lesson. Versa waves.',
+    height: size.visualCompareHeight,
+    artWidth: size.visualWidth,
+    artTop: 0,
   },
 ];
 
 function HowItWorks() {
   return (
-    <View className="gap-80 bg-canvas px-64 py-120">
+    <View className="gap-80 bg-paper px-64 pb-120 pt-80">
       <View className="gap-20">
         <Eyebrow>HOW IT WORKS</Eyebrow>
-        <Text className="font-bold text-section text-ink">A project path with help{'\n'}where you need it.</Text>
+        <Text className="font-bold text-section text-ink">Four steps from brief to reflection.</Text>
       </View>
-      {steps.map((s, i) => (
-        <View key={s.n} className={`items-center justify-between ${i % 2 ? 'flex-row-reverse' : 'flex-row'}`}>
-          <View className="w-column gap-20">
-            <View className={`h-badge w-badge items-center justify-center rounded-pill ${s.badge}`}>
-              <Text className="font-bold text-h4 text-ink">{s.n}</Text>
+      <View className="gap-120">
+        {steps.map((s, i) => (
+          <View key={s.title} className={`items-center justify-between ${i % 2 ? 'flex-row-reverse' : 'flex-row'}`}>
+            <View className="w-stepText gap-20">
+              <Image source={s.badge} style={{ width: size.stepBadge, height: size.stepBadge }} />
+              <Text className="font-bold text-stepTitle text-ink">{s.title}</Text>
+              <Text className="w-stepBody font-regular text-howBody text-secondaryText">{s.body}</Text>
+              <View className="mt-48 w-stepBody gap-6 border-t border-border pt-24">
+                <Text className="font-bold text-nav text-ink">{s.sub}</Text>
+                <Text className="font-regular text-nav text-secondaryText">{s.subBody}</Text>
+              </View>
             </View>
-            <Text className="font-bold text-stepTitle text-ink">{s.title}</Text>
-            <Text className="font-regular text-howBody text-secondaryText">{s.body}</Text>
-            <View className="gap-6 border-t border-border pt-20">
-              <Text className="font-bold text-nav text-ink">{s.sub}</Text>
-              <Text className="font-regular text-nav text-secondaryText">{s.subBody}</Text>
+            <View className="w-visualWidth" style={{ height: s.height }}>
+              <Image
+                source={s.art}
+                accessibilityLabel={s.label}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: s.artTop,
+                  width: s.artWidth,
+                  height: s.height - s.artTop,
+                }}
+                contentFit="fill"
+              />
             </View>
           </View>
-          {s.visual}
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 }
 
+/** Figma: Example project (11125:39110) */
 function ExampleProject({ onExample }: { onExample: () => void }) {
-  const thumbs = [
-    { v: 'v1 · Original', src: asset.cafe1 },
-    { v: 'v2 · Alternative', src: asset.cafe2 },
-    { v: 'v3 · Saved revision', src: asset.cafe3 },
-  ];
   return (
-    <View className="flex-row items-center justify-between bg-sand px-64 py-96">
+    <View className="flex-row items-center justify-between bg-sand px-64 py-110">
       <View className="w-column gap-24">
-        <Text className="font-bold text-section text-ink">See it on a real project.</Text>
+        <Eyebrow>EXAMPLE PROJECT</Eyebrow>
+        <Text className="font-bold text-section text-ink">See it on a{'\n'}real project.</Text>
         <Text className="font-regular text-leadSmall text-secondaryText">
           Bring one screen and a goal. Every version stays saved.
         </Text>
-        <View className="gap-12">
+        <View className="gap-26 pt-64">
           {['Your screen and goal stay side by side', 'Feedback is pinned to what is visible', 'v1, v2 and v3 stay saved to compare'].map(
             (b) => (
-              <View key={b} className="flex-row items-center gap-10">
-                <Image source={asset.checkInk} style={{ width: size.check, height: size.checkHeight }} />
-                <Text className="font-medium text-bodyLarge text-ink">{b}</Text>
-              </View>
+              <Text key={b} className="font-medium text-bodyLarge text-ink">
+                {b}
+              </Text>
             ),
           )}
         </View>
-        <View className="self-start">
+        <View className="self-start pt-28">
           <Button label="Try the example project" variant="outline" size="hero" arrow onPress={onExample} />
         </View>
       </View>
-      <View className="w-preview h-previewHeight gap-16 rounded-28 bg-white p-28" style={cardShadow}>
-        <Sticker crew="opus" size={size.crewStickerSmall} style={{ position: 'absolute', right: -space[24], top: -space[48] }} />
-        <View className="flex-row gap-12">
-          {thumbs.map((t, i) => (
-            <View key={t.v} className="gap-6">
-              <View className={`rounded-14 bg-chip p-6 ${i === 2 ? 'border-focus border-ink' : ''}`}>
-                <Image source={t.src} style={{ width: size.previewThumb - space[12], height: size.previewThumbHeight - space[12], borderRadius: radius[6] }} />
-              </View>
-              <Text className="font-medium text-labelSmall text-secondaryText">{t.v}</Text>
-            </View>
-          ))}
-        </View>
-        <Image source={asset.cafe3} style={{ width: size.previewMain, height: size.previewMainHeight - space[80], borderRadius: radius[14] }} />
-        <View className="flex-row items-center justify-between">
-          <Text className="font-semibold text-labelUi text-ink">v3 · Saved revision</Text>
-          <Text className="font-regular text-labelSmall text-secondaryText">Menu is outlined, pickup stays first.</Text>
-        </View>
+      {/* Figma: Versions preview (11125:39124), Opus reading on its top edge. */}
+      <View className="w-versionsPreview h-versionsPreviewHeight overflow-visible rounded-28 bg-white" style={cardShadow}>
+        <Image
+          source={asset.versionsPreview}
+          accessibilityLabel="Versions v1, v2 and v3, with v3 saved revision open"
+          style={{ width: size.versionsPreview, height: size.versionsPreviewHeight, borderRadius: radius[28] }}
+          contentFit="fill"
+        />
+        <Sticker
+          crew="opus"
+          width={size.examplePreviewOpus}
+          style={{ position: 'absolute', left: size.examplePreviewOpusLeft, top: size.examplePreviewOpusTop }}
+        />
       </View>
     </View>
   );
 }
 
-const crew: { name: string; tag: string; body: string; bg: string; light?: boolean; shape?: number; sticker: Crew }[] = [
-  { name: 'Mate', tag: 'm · make', body: 'Your guide. Shows the brief and the next step.', bg: 'bg-mateOrange', shape: asset.crewMate, sticker: 'mate' },
-  { name: 'Versa', tag: 'v · compare', body: 'Lays two versions side by side.', bg: 'bg-versaPink', shape: asset.crewVersa, sticker: 'versa' },
-  { name: 'Opus', tag: 'o · teach', body: 'Explains the why behind a tip.', bg: 'bg-opusYellow', sticker: 'opus' },
-  { name: 'Arti', tag: 'a · critique', body: 'Points out what to improve.', bg: 'bg-artiBlue', light: true, shape: asset.crewArti, sticker: 'arti' },
+const crew: { name: string; tag: string; body: string; bg: string; light?: boolean; shape?: number; sticker: Crew; w: number; left: number; top: number }[] = [
+  { name: 'Mate', tag: 'm  ·  make', body: 'Your guide. Shows the brief and the next step.', bg: 'bg-mateOrange', shape: asset.crewMate, sticker: 'mate', w: size.crewCardMate, left: size.crewCardMateLeft, top: size.crewCardMateTop },
+  { name: 'Versa', tag: 'v · compare', body: 'Lays two versions side by side.', bg: 'bg-versaPink', shape: asset.crewVersa, sticker: 'versa', w: size.crewCardVersa, left: size.crewCardVersaLeft, top: size.crewCardVersaTop },
+  { name: 'Opus', tag: 'o · teach', body: 'Explains the why behind a tip.', bg: 'bg-opusYellow', sticker: 'opus', w: size.crewCardOpus, left: size.crewCardOpusLeft, top: size.crewCardOpusTop },
+  { name: 'Arti', tag: 'a · critique', body: 'Points out what to improve.', bg: 'bg-artiBlue', light: true, shape: asset.crewArti, sticker: 'arti', w: size.crewCardArti, left: size.crewCardArtiLeft, top: size.crewCardArtiTop },
 ];
 
+/** Figma: The crew (11125:39199 – 39447). Each v3 sticker stands on its card's ink shape. */
 function CrewSection() {
   return (
-    <View className="gap-48 bg-white px-64 py-120">
+    <View className="gap-56 bg-paper px-64 pb-64 pt-100">
       <View className="gap-20">
-        <Eyebrow>MEET THE CREW</Eyebrow>
+        <Eyebrow>THE CREW</Eyebrow>
         <Text className="font-bold text-section text-ink">Four helpers.{'\n'}Each shows up at one moment.</Text>
       </View>
       <View className="flex-row gap-24">
         {crew.map((c) => (
-          <View key={c.name} className={`w-crewCard h-crewCardHeight gap-8 overflow-hidden rounded-32 p-32 ${c.bg}`}>
+          <View key={c.name} className={`w-crewCard h-crewCardHeight gap-8 overflow-hidden rounded-32 p-28 ${c.bg}`}>
             <Text className={`font-bold text-crewName ${c.light ? 'text-white' : 'text-ink'}`}>{c.name}</Text>
             <Text className={`font-semibold text-labelUi ${c.light ? 'text-white' : 'text-ink'}`}>{c.tag}</Text>
-            <Text className={`font-regular text-nav ${c.light ? 'text-white' : 'text-ink'}`}>{c.body}</Text>
+            <Text className={`pt-8 font-regular text-nav ${c.light ? 'text-white' : 'text-ink'}`}>{c.body}</Text>
             {c.shape ? (
               <Image
                 source={c.shape}
@@ -396,7 +301,7 @@ function CrewSection() {
                 style={{ position: 'absolute', left: size.crewShapeLeft, top: size.crewShapeTop, width: size.crewShape, height: size.crewShape }}
               />
             )}
-            <Sticker crew={c.sticker} size={size.crewSticker} style={{ position: 'absolute', right: space[16], top: size.crewStickerTop }} />
+            <Sticker crew={c.sticker} width={c.w} style={{ position: 'absolute', left: c.left, top: c.top }} />
           </View>
         ))}
       </View>
@@ -406,31 +311,33 @@ function CrewSection() {
 }
 
 const toolRows = [
-  { name: 'Critique', body: 'Points to one part of your screen and explains one principle.', price: '5 credits / new run', bg: 'bg-critiqueIcon', icon: asset.shapeMake, w: size.shape, h: size.triangleLargeHeight },
-  { name: 'Compare', body: 'Put two versions side by side and save the one you pick.', price: 'Manual comparison · Free', bg: 'bg-compareIcon', icon: asset.shapeReflect, w: size.shape, h: size.shape },
-  { name: 'Tutorials', body: 'Short guides for a tool or a principle.', price: 'Short guides · Free', bg: 'bg-tutorialIcon', icon: asset.planNote, w: size.shape, h: size.triangleLargeHeight },
+  { name: 'Critique', body: 'Find what to improve.', price: '5 credits / new run', icon: asset.toolIconCritique },
+  { name: 'Compare', body: 'View versions side by side.', price: 'Manual comparison · Free', icon: asset.toolIconCompare },
+  { name: 'Tutorials', body: 'Learn a tool or principle.', price: 'Short guides · Free', icon: asset.toolIconTutorials },
 ];
 
+/** Figma: Tools (11125:39448) */
 function Tools() {
   return (
-    <View className="gap-40 bg-white px-64 pb-120">
-      <View className="gap-12">
-        <Text className="font-bold text-headline text-ink">Three tools, priced up front.</Text>
-        <Text className="font-regular text-leadSmall text-secondaryText">
+    <View className="flex-row justify-between bg-white px-64 py-100">
+      <View className="w-column gap-20">
+        <Eyebrow>TOOLS</Eyebrow>
+        <Text className="font-bold text-headline text-ink">Three tools,{'\n'}priced up front.</Text>
+        <Text className="w-stepBody font-regular text-leadSmall text-secondaryText">
           You always see the cost before you run something new.
         </Text>
       </View>
-      <View>
+      <View className="w-preview border-b border-border">
         {toolRows.map((t) => (
-          <View key={t.name} className="flex-row items-center gap-24 border-t border-border py-24">
-            <View className={`h-toolIcon w-toolIcon items-center justify-center rounded-pill ${t.bg}`}>
-              <Image source={t.icon} style={{ width: t.w, height: t.h }} contentFit="contain" />
-            </View>
+          <View key={t.name} className="flex-row items-center gap-28 border-t border-border py-30">
+            <Image source={t.icon} style={{ width: size.toolIcon72, height: size.toolIcon72 }} />
             <View className="flex-1 gap-4">
-              <Text className="font-bold text-h4 text-ink">{t.name}</Text>
+              <Text className="font-bold text-heading text-ink">{t.name}</Text>
               <Text className="font-regular text-bodyLarge text-secondaryText">{t.body}</Text>
             </View>
-            <Text className="font-semibold text-nav text-ink">{t.price}</Text>
+            <View className="rounded-pill bg-paper px-16 py-10">
+              <Text className="font-bold text-bodySmall text-ink">{t.price}</Text>
+            </View>
           </View>
         ))}
       </View>
@@ -445,7 +352,7 @@ const plans = [
     lead: 'Try the first stages',
     items: ['1 included critique', 'Project setup and first-stage guidance', 'Continue with a Project Pass'],
     cta: 'Create free account',
-    tone: 'raised' as const,
+    tone: 'ink' as const,
     icon: asset.planFree,
   },
   {
@@ -463,75 +370,90 @@ const plans = [
     lead: 'Ongoing practice',
     items: ['400 credits each month', '2 active projects', 'History and decisions across projects'],
     cta: 'Choose Studio',
-    tone: 'raised' as const,
+    tone: 'ink' as const,
     icon: asset.planStudio,
   },
 ];
 
-function Plans({ onStart }: { onStart: () => void }) {
+/** Figma: Plans & AI credits (11125:39474). Plan buttons lead to Account · Plans when signed in. */
+function Plans({ onPlan }: { onPlan: (name: string) => void }) {
   return (
-    <View className="gap-48 bg-ink px-64 py-120">
+    <View className="gap-40 bg-ink px-64 pb-80 pt-100">
       <View className="gap-20">
-        <Eyebrow light>PLANS</Eyebrow>
-        <Text className="font-bold text-section text-white">Pay for one project,{'\n'}or keep practising.</Text>
+        <Eyebrow light>PLANS & AI CREDITS</Eyebrow>
+        <Text className="font-bold text-section text-white">Start free.{'\n'}Add AI help when you need it.</Text>
+        <Text className="font-regular text-leadSmall text-onDarkMuted">
+          Credits are only used for new AI requests. You see the price first.
+        </Text>
       </View>
-      <View className="flex-row gap-24">
+      <View className="mt-56 flex-row items-center gap-32">
         {plans.map((p) => {
           const yellow = p.tone === 'yellow';
           return (
-            <View key={p.name} className={`w-planCard gap-20 rounded-32 p-32 ${yellow ? 'bg-opusYellow' : 'bg-inkRaised'}`}>
+            <View key={p.name} className={`w-planCard gap-12 rounded-32 p-32 ${yellow ? 'bg-opusYellow' : 'bg-ink'}`}>
               <View className="flex-row items-center justify-between">
-                <Image source={p.icon} style={{ width: size.icon, height: size.icon }} contentFit="contain" />
+                <View className="flex-row items-center gap-10">
+                  <Image source={p.icon} style={{ width: size.planDot, height: size.planDot }} contentFit="contain" />
+                  <Text className={`font-bold text-nav ${yellow ? 'text-ink' : 'text-white'}`}>{p.name}</Text>
+                </View>
                 {yellow && (
                   <View className="rounded-pill bg-ink px-12 py-4">
-                    <Text className="font-semibold text-labelSmall text-opusYellow">Full project</Text>
+                    <Text className="font-semibold text-labelSmall text-white">Full project</Text>
                   </View>
                 )}
               </View>
-              <Text className={`font-semibold text-nav ${yellow ? 'text-ink' : 'text-onDarkMuted'}`}>{p.name}</Text>
-              <Text className={`font-bold text-price ${yellow ? 'text-ink' : 'text-white'}`}>{p.price}</Text>
-              <Text className={`font-medium text-bodyLarge ${yellow ? 'text-ink' : 'text-white'}`}>{p.lead}</Text>
-              <View className={`gap-12 border-t pt-20 ${yellow ? 'border-yellowDivider' : 'border-inkDivider'}`}>
+              <Text className={`pt-12 font-bold text-price ${yellow ? 'text-ink' : 'text-white'}`}>{p.price}</Text>
+              <Text className={`font-regular text-labelUi ${yellow ? 'text-ink' : 'text-onDarkMuted'}`}>{p.lead}</Text>
+              <View className={`mt-8 gap-20 border-t pt-24 ${yellow ? 'border-yellowDivider' : 'border-inkDivider'}`}>
                 {p.items.map((it) => (
-                  <View key={it} className="flex-row items-center gap-10">
+                  <View key={it} className="flex-row items-center gap-12">
                     <Image source={yellow ? asset.checkInk : asset.checkWhite} style={{ width: size.check, height: size.checkHeight }} />
-                    <Text className={`font-regular text-nav ${yellow ? 'text-ink' : 'text-onDarkMuted'}`}>{it}</Text>
+                    <Text className={`font-regular text-labelUi ${yellow ? 'text-ink' : 'text-white'}`}>{it}</Text>
                   </View>
                 ))}
               </View>
-              <Button
-                label={p.cta}
-                variant={yellow ? 'yellowInk' : 'outlineOnDark'}
-                size="lg"
-                full
-                onPress={onStart}
-              />
+              <View className="pt-64">
+                <Button
+                  label={p.cta}
+                  variant={yellow ? 'primary' : 'outlineOnDark'}
+                  size="lg"
+                  full
+                  onPress={() => onPlan(p.name)}
+                />
+              </View>
             </View>
           );
         })}
       </View>
-      <View className="flex-row items-center justify-between rounded-24 border border-inkDivider px-32 py-24">
-        <Text className="font-bold text-h4 text-white">Some tools need Project Pass or Studio</Text>
-        <Text className="font-regular text-nav text-onDarkMuted">Deeper AI tools use credits. Manual compare and notes stay free.</Text>
+      <View className="flex-row items-start gap-12">
+        <Image source={asset.planNote} style={{ width: size.iconSmall, height: size.iconSmall }} contentFit="contain" />
+        <View className="gap-4">
+          <Text className="font-bold text-labelUi text-white">Some tools need Project Pass or Studio</Text>
+          <Text className="font-regular text-bodySmall text-onDarkMuted">Deeper AI tools use credits. Manual compare and notes stay free.</Text>
+        </View>
       </View>
     </View>
   );
 }
 
 const faqs = [
-  ['Do I need my own project?', 'No. Start with the café brief, or bring one screen of your own when you are ready.'],
-  ['What uses credits?', 'Only AI critique. Upload, manual comparison and saved notes are free, and you see the cost before anything runs.'],
-  ['Will the AI redesign my work?', 'No. It points to one part of your screen and explains one principle. You decide what to change.'],
-  ['What do I keep at the end?', 'Every version, the choice you made, why you made it, and one lesson to carry forward.'],
+  ['Do I need my own project?', 'No. Start with the café project — no setup needed. You can bring your own screen any time.'],
+  ['What uses credits?', 'Only new AI requests. You see the price first; manual work is free.'],
+  ['Will the AI redesign my work?', 'No. You decide what to change. Feedback points to one detail on your screen.'],
+  ['What do I keep at the end?', 'Every version — v1, v2 and v3 — the reason you chose one, and one useful lesson for next time.'],
 ];
 
+/** Figma: FAQ (11125:39526 – 39540) */
 function Faq() {
   return (
-    <View className="flex-row justify-between bg-white px-64 py-120">
-      <Text className="w-column font-bold text-headline text-ink">Questions, answered.</Text>
-      <View className="w-visual">
+    <View className="flex-row justify-between bg-paper px-64 pt-100">
+      <View className="w-column gap-20">
+        <Eyebrow>FAQ</Eyebrow>
+        <Text className="font-bold text-headline text-ink">Questions,{'\n'}answered.</Text>
+      </View>
+      <View className="w-visual border-b border-border">
         {faqs.map(([q, a]) => (
-          <View key={q} className="gap-8 border-t border-border py-24">
+          <View key={q} className="gap-8 border-t border-border pb-28 pt-26">
             <Text className="font-bold text-h4 text-ink">{q}</Text>
             <Text className="font-regular text-bodyLarge text-secondaryText">{a}</Text>
           </View>
@@ -543,7 +465,7 @@ function Faq() {
 
 function Cta({ onStart, onExample }: { onStart: () => void; onExample: () => void }) {
   return (
-    <View className="items-center gap-24 overflow-hidden bg-canvas px-64 pt-120">
+    <View className="items-center gap-24 bg-paper px-64 pt-60">
       <Eyebrow>CREATE YOUR ACCOUNT</Eyebrow>
       <Text className="text-center font-bold text-cta text-ink">Start with the café project.{'\n'}No setup needed.</Text>
       <Text className="font-regular text-lead text-secondaryText">Keep your projects and versions in one place.</Text>
@@ -551,17 +473,19 @@ function Cta({ onStart, onExample }: { onStart: () => void; onExample: () => voi
         <Button label="Create free account" size="hero" arrow onPress={onStart} />
         <Button label="Try the example project" size="hero" variant="outline" arrow onPress={onExample} />
       </View>
-      <View className="mt-64 flex-row items-end gap-24">
-        <Image source={asset.luA} style={{ width: size.lineUp, height: size.lineUpA }} />
-        <Image source={asset.luB} style={{ width: size.lineUp, height: size.lineUp }} />
-        <Image source={asset.luC} style={{ width: size.lineUp, height: size.lineUpC }} />
-        <Image source={asset.luD} style={{ width: size.lineUp, height: size.lineUpD }} />
+      {/* Figma: Crew line-up (11125:39552), the four v3 stickers standing on the footer. */}
+      <View className="mt-44 h-lineUpHeight self-stretch" style={{ marginHorizontal: -space[64] }}>
+        <Sticker crew="mate" width={size.lineUpMate} style={{ position: 'absolute', left: size.lineUpMateLeft, top: size.lineUpMateTop }} />
+        <Sticker crew="opus" width={size.lineUpOpus} style={{ position: 'absolute', left: size.lineUpOpusLeft, top: size.lineUpOpusTop }} />
+        <Sticker crew="versa" width={size.lineUpVersa} style={{ position: 'absolute', left: size.lineUpVersaLeft, top: size.lineUpVersaTop }} />
+        <Sticker crew="arti" width={size.lineUpArti} style={{ position: 'absolute', left: size.lineUpArtiLeft, top: size.lineUpArtiTop }} />
       </View>
     </View>
   );
 }
 
 function Footer({ onSection }: { onSection: (s: Section) => void }) {
+  // Figma: Footer (11125:39783). Privacy and Contact have no prototype link yet.
   const links: [string, Section | null][] = [
     ['How it works', 'how'],
     ['Example project', 'example'],

@@ -2,16 +2,17 @@ import { Image } from 'expo-image';
 import { Text, View } from 'react-native';
 
 import type { Tool } from '@/components/MovaToolCard';
+import { Motion, type MotionName } from '@/components/Motion';
 import { asset, hoverShadow } from '@/lib/ui';
 import { size } from '@/tokens';
 
-const preview: Record<Tool, { name: string; intro: string; surface: string; top: number; motion: number; shot: number }> = {
+const preview: Record<Tool, { name: string; intro: string; surface: string; top: number; motion: MotionName; shot: number }> = {
   critique: {
     name: 'Critique',
     intro: 'Get feedback on one version and find one concrete change to try.',
     surface: 'bg-previewCritique border-previewCritiqueBorder',
     top: size.toolPreviewTopCritique,
-    motion: asset.motionCritique,
+    motion: 'critique',
     shot: asset.previewShotCritique,
   },
   compare: {
@@ -19,7 +20,7 @@ const preview: Record<Tool, { name: string; intro: string; surface: string; top:
     intro: 'Put two versions side by side and choose which one to revise.',
     surface: 'bg-previewCompare border-previewCompareBorder',
     top: size.toolPreviewTopCompare,
-    motion: asset.motionCompare,
+    motion: 'compare',
     shot: asset.previewShotCompare,
   },
   tutorials: {
@@ -27,7 +28,7 @@ const preview: Record<Tool, { name: string; intro: string; surface: string; top:
     intro: 'Follow a short guide and try the technique on your own screen.',
     surface: 'bg-previewTutorials border-previewTutorialsBorder',
     top: size.toolPreviewTopTutorials,
-    motion: asset.motionTutorials,
+    motion: 'tutorials',
     shot: asset.previewShotTutorials,
   },
 };
@@ -49,16 +50,10 @@ export function ToolHoverPreview({ tool }: { tool: Tool }) {
       <View className="h-toolPreviewShotHeight w-toolPreviewShot overflow-hidden rounded-12 bg-white">
         <Image source={p.shot} style={{ flex: 1 }} contentFit="cover" />
       </View>
-      <Image
-        source={p.motion}
-        style={{
-          position: 'absolute',
-          left: size.toolPreviewMotionLeft,
-          top: size.toolPreviewMotionTop,
-          width: size.toolPreviewMotion,
-          height: size.toolPreviewMotionHeight,
-        }}
-        contentFit="contain"
+      <Motion
+        name={p.motion}
+        width={size.toolPreviewMotion}
+        style={{ position: 'absolute', left: size.toolPreviewMotionLeft, top: size.toolPreviewMotionTop }}
       />
     </View>
   );

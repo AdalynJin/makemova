@@ -77,6 +77,7 @@ export const fontFamily = {
   medium: 'DMSans_500Medium',
   bold: 'DMSans_700Bold',
   semibold: 'DMSans_600SemiBold',
+  extrabold: 'DMSans_800ExtraBold', // Account · Credits & usage / Plans titles and stat numbers
 } as const;
 
 /** Type scale: size / line height in px. */
@@ -132,6 +133,18 @@ export const textStyle = {
   // R5 · Tutorials category (11125:60129)
   category: { size: 11, lineHeight: 16, letterSpacing: 0 },
   panelTitle: { size: 18, lineHeight: 26, letterSpacing: -0.2 }, // R7 · Tools title
+  // Shared · Explore practice templates (11125:41603)
+  templateTitle: { size: 48, lineHeight: 51.84, letterSpacing: -1.152 },
+  templateName: { size: 28, lineHeight: 39.2, letterSpacing: 0 },
+  templateLead: { size: 18, lineHeight: 25.2, letterSpacing: 0 },
+  templateBody: { size: 16, lineHeight: 22.4, letterSpacing: 0 },
+  templateNote: { size: 15, lineHeight: 21, letterSpacing: 0 },
+  templateMeta: { size: 13, lineHeight: 18.2, letterSpacing: 0 },
+  templateEyebrow: { size: 12, lineHeight: 16.8, letterSpacing: 0 },
+  // Account · Credits & usage (11125:52489) and Account · Plans (11125:52604)
+  accountTitle: { size: 44, lineHeight: 48, letterSpacing: -0.88 },
+  planPrice: { size: 30, lineHeight: 36, letterSpacing: -0.3 },
+  tableHead: { size: 13, lineHeight: 18, letterSpacing: 0.52 },
   compareLabel: { size: 12.174, lineHeight: 17.391, letterSpacing: 0 }, // Compare versions · A / B labels and actions
 } as const;
 
@@ -161,6 +174,12 @@ export const space = {
   120: 120,
   9: 9, // MOVA · Hover preview gap
   15: 15, // MOVA · Hover preview side padding inside its 1 stroke
+  26: 26, // homepage example bullets, FAQ rows
+  30: 30, // homepage tool rows
+  44: 44, // homepage line-up gap
+  60: 60, // homepage CTA top
+  100: 100, // homepage section top
+  110: 110, // homepage example section
 } as const;
 
 export const radius = {
@@ -343,12 +362,81 @@ export const size = {
   heroMate: 256.679, // Refined crew · visual (11214:30742), Mate · Orient
   heroMateLeft: 226.296,
   heroMateTop: 21.813,
-  signInMate: 69.299, // Refined crew · visual (11214:31403), Mate · Orient
-  signInMateLeft: 343.35, // from the auth card's left edge
-  signInMateTop: -74.42, // feet rest on the auth card
-  setupMate: 95.92, // Refined crew · visual (11214:31805), Mate · Encourage
-  setupMateLeft: 559.54, // from the set-up card's left edge
-  setupMateTop: -84.18, // feet rest on the set-up card
+  // Homepage v3 (Refined 11125:38701). Hero values are in the hero section (Figma y minus the 81 nav).
+  heroPreviewArt: 692, // Workspace preview 11125:38771 exported with its shadow (render −48, −24)
+  heroPreviewArtHeight: 442,
+  heroPreviewArtLeft: -8, // inside the Mate arch
+  heroPreviewArtTop: 306,
+  heroMateArt: 303.5, // Hero · Mate looks 11523:36009 · Mate, exported without pupils
+  heroMateArtHeight: 319.5,
+  heroMateArtLeft: 719, // 750 − 31
+  heroMateArtTop: 72, // 188 − 81 − 35
+  heroPupil: 10.1, // Eye ellipse
+  heroPupilHeight: 12.6,
+  heroHighlight: 3.8,
+  heroZoneColumns: 8, // Hover zones: 8 × 4 grid over the 1440 × 818 hero
+  heroZoneRows: 4,
+  valueStripHeight: 420,
+  valueColumn: 416,
+  stepBadge: 56,
+  stepText: 480,
+  stepBody: 440,
+  visualWidth: 760, // how-it-works visual frames
+  visualBringHeight: 431,
+  visualAskHeight: 462,
+  visualCompareHeight: 529,
+  visualBringArtTop: -120.7, // characters rise above the visual frame
+  visualAskArt: 777.1,
+  visualAskArtTop: -78.8,
+  versionsPreview: 676,
+  versionsPreviewHeight: 500,
+  examplePreviewOpus: 84.3, // Example project · Opus
+  examplePreviewOpusLeft: 558, // from the versions card's left edge
+  examplePreviewOpusTop: -94,
+  crewCardMate: 157.2, // crew card characters (left, top inside the 310 × 460 card)
+  crewCardMateLeft: 59,
+  crewCardMateTop: 218.9,
+  crewCardVersa: 144.5,
+  crewCardVersaLeft: 98.5,
+  crewCardVersaTop: 218.3,
+  crewCardOpus: 92.7,
+  crewCardOpusLeft: 108.6,
+  crewCardOpusTop: 238,
+  crewCardArti: 134.4,
+  crewCardArtiLeft: 68.5,
+  crewCardArtiTop: 242.5,
+  lineUpHeight: 170, // Crew line-up 11125:39552
+  lineUpMate: 127,
+  lineUpMateLeft: 150,
+  lineUpMateTop: 65,
+  lineUpOpus: 73.7,
+  lineUpOpusLeft: 470,
+  lineUpOpusTop: 82.5,
+  lineUpVersa: 116.7,
+  lineUpVersaLeft: 900,
+  lineUpVersaTop: 65,
+  lineUpArti: 106.4,
+  lineUpArtiLeft: 1210,
+  lineUpArtiTop: 75,
+  toolIcon72: 72,
+  planDot: 20,
+  // CH00 account screens (Refined): characters stand on the 480 auth card. Left is from the card's left edge.
+  peekShowTheWay: 124, // Character peek · Mate · Show the way (sign in, create account)
+  peekShowTheWayLeft: 316,
+  peekSetTheGoal: 99, // Character peek · Mate · Set the goal (email sent)
+  peekSetTheGoalLeft: 341,
+  peekReflectDone: 99.2, // Character peek · Mate · Reflect · done (password saved)
+  peekReflectDoneLeft: 341,
+  resetMotion: 113.4, // MOVA · Motion · brief on Reset password
+  resetMotionLeft: 312,
+  resetMotionTop: -59,
+  newPasswordMotion: 157.7, // MOVA · Motion · revise on Set new password
+  newPasswordMotionLeft: 295,
+  newPasswordMotionTop: -92,
+  setupMateMoveIt: 145, // Flow A · CH02: Character peek · Mate · Move it, from the 864 set-up card's left edge
+  setupMateMoveItLeft: 535,
+  setupMateMake: 136, // Flow B · CH01: Character peek · Mate · Make
+  setupMateMakeLeft: 544,
   // Homepage v3 hero copy column, Figma y minus the 81 nav (11125:38739–38769)
   heroEyebrowTop: 95,
   heroTitleTop: 129,
@@ -373,6 +461,31 @@ export const size = {
   motionBriefHeight: 89,
   motionBriefLeft: 25.79, // from the dialog's left edge
   motionBriefTop: -67, // feet rest on the dialog
+  motionDialog: 96.4, // MOVA · Motion · brief / guide instance on dialog pages
+  quickGuideOpus: 97, // R6 · Quick guide: Character peek · Opus · Here’s a guide
+  quickGuideOpusLeft: 423, // from the dialog's left edge
+  // Shared · Explore practice templates (11125:41603)
+  pageContent: 1312, // 1440 frame minus the 64 sides
+  templateArt: 260,
+  templateCafe: 358, // Your design · v2, 358 × 228
+  templateCafeHeight: 228,
+  templateTandem: 228, // Artifact / Tandem app icon / Version=2
+  templateBringOwn: 280,
+  templateHello: 120, // MOVA · Motion · hello beside the title's second line
+  templateHelloGap: 24, // from the end of "yours."
+  templateHelloTop: -51.84, // Figma y 173, one title line above line two
+  // Account · Credits & usage (11125:52489) and Plans (11125:52604)
+  creditsGuide: 110, // MOVA · Motion · guide, 1121,104
+  creditsGuideLeft: 1057,
+  creditsGuideTop: -8,
+  creditsColumn: 421, // stat cards and Always free
+  usageBar: 8,
+  creditCost: 28,
+  creditPlanColumn: 220, // Available on column
+  creditTopicColumn: 440,
+  plansBrief: 96, // MOVA · Motion · brief, 647,125
+  plansBriefGap: 25, // from the end of the title
+  plansBriefTop: -45,
   // Week 8 Refined · Edit menu, project actions, tools (Task: Edit / ⋯ / Tools)
   editDropdown: 240, // R9 · Edit dropdown (11125:41814)
   editDropdownTop: 48, // below the 40 Edit button, 4 above the header edge
@@ -423,16 +536,70 @@ export const size = {
 } as const;
 
 /**
- * Crew v2 sticker geometry from "Refined sticker masters" (11203:19606).
- * art = exported SVG canvas; box = component frame; offset = frame origin inside the SVG
- * (die-cut and shadow reach past the frame, exactly as Figma exports them).
+ * Crew v3 character geometry, from the Refined prototype placements (11085:17520).
+ * box = the placement frame in Figma (the size you pass as width scales it);
+ * render = where the exported art (die-cut edge and shadow included) sits against that frame: [x, y, w, h].
+ * Peeks overflow their frame upward so the character stands on the card edge.
  */
 export const crewArt = {
-  mate: { art: [240, 253], box: [203, 218], offset: [24.455, 27.762] }, // Mate · Orient 11203:19607
-  opus: { art: [240, 253], box: [160, 199], offset: [38, 46] }, // Opus · Read 11203:19707
-  versa: { art: [240, 258], box: [205, 249], offset: [27.533, 1.25] }, // Versa · Compare 11203:19807
-  arti: { art: [240, 253], box: [191, 204], offset: [31.957, 41.045] }, // Arti · Focus 11203:19897
-  mateEncourage: { art: [245, 253], box: [237, 208], offset: [4.252, 37.893] }, // Mate · Encourage 11203:19656
+  mate: { box: [145.1, 120], render: [-28, -78.7, 214.2, 225.4] }, // Homepage · Visual · Bring your work · Mate 11125:38886
+  arti: { box: [112, 100], render: [-30.8, -80.8, 194.2, 204.3] }, // Visual · Ask about one decision · Arti 11125:38972
+  versa: { box: [111.2, 100], render: [-35, -32.2, 150.9, 151.8] }, // Visual · Compare, revise, reflect · Versa 11125:39052
+  opus: { box: [84.3, 100], render: [-56.2, -85, 198.2, 208.6] }, // Example project · Opus 11125:39145
+  mateShowTheWay: { box: [124, 61], render: [0, -22.9, 124, 86.2] }, // Character peek · Mate · Show the way 11125:39953
+  mateSetTheGoal: { box: [99, 62], render: [0, -23.3, 99, 87.6] }, // Character peek · Mate · Set the goal 11125:40412
+  mateReflectDone: { box: [99.2, 82], render: [0, -2.4, 99.2, 86.7] }, // Character peek · Mate · Reflect · done 11125:40811
+  mateMake: { box: [125, 58], render: [0, -25.7, 125, 85.9] }, // Character peek · Mate · Make 11125:41190
+  artiInspect: { box: [119, 63], render: [0, -29.3, 119, 95.1] }, // Character peek · Arti · Inspect 11125:41216
+  mateMoveIt: { box: [145, 69], render: [0, -30.5, 145, 102.2] }, // Character peek · Mate · Move it 11125:41444
+  opusGuide: { box: [97, 56], render: [0, -28.1, 97, 86.7] }, // Character peek · Opus · Here’s a guide 11125:59904
+} as const;
+
+/**
+ * Figma: Vector motion component sets (Refined, 11125:62314). Each set plays Frame=01 → last and loops
+ * (After delay 20 ms, Smart animate). Values are the per-frame transition times in ms, in play order.
+ * Sprite strips in assets/figma/motion are 156×144 frames exported at 2x.
+ */
+export const motion = {
+  frame: [156, 144],
+  brief: [320, 380, 140, 360, 300, 300, 360, 380], // 11125:62758
+  revise: [180, 180, 180, 180, 140, 360, 500, 340, 200], // 11125:62984
+  hello: [320, 380, 140, 360, 300, 300, 360, 380], // 11125:62315
+  critique: [320, 380, 140, 360, 300, 300, 360, 380], // 11125:64276
+  compare: [320, 380, 140, 360, 300, 300, 360, 380], // 11125:63779
+  tutorials: [320, 380, 140, 360, 300, 300, 360, 380], // 11125:64050
+  saved: [320, 380, 140, 360, 300, 300, 360, 380], // 11125:63508
+  reflect: [300, 300, 160, 360, 360, 300], // 11125:63255
+  guide: [320, 380, 140, 360, 300, 300, 360, 380], // 11125:62550
+} as const;
+
+/**
+ * Figma: Hero · Mate looks (11523:36009). Pupil top-left inside the exported Mate art for each Look variant;
+ * highlight sits 5.2, 1.7 from its pupil. Zones map the 8 × 4 hover grid to a Look, row by row.
+ */
+export const heroLook = {
+  pupils: [
+    [129.8, 120.1],
+    [172.5, 115.6],
+  ],
+  highlight: [5.2, 1.7],
+  offset: {
+    center: [0, 0],
+    left: [-11.16, 1.9],
+    right: [4.84, 1.9],
+    up: [-3.16, -5.1],
+    down: [-3.16, 8.9],
+    upLeft: [-11.16, -5.1],
+    upRight: [4.84, -5.1],
+    downLeft: [-11.16, 8.9],
+    downRight: [4.84, 8.9],
+  },
+  zones: [
+    ['left', 'left', 'left', 'left', 'left', 'upLeft', 'upRight', 'right'],
+    ['left', 'left', 'left', 'left', 'downLeft', 'downLeft', 'downRight', 'downRight'],
+    ['left', 'left', 'downLeft', 'downLeft', 'downLeft', 'down', 'down', 'downRight'],
+    ['downLeft', 'downLeft', 'downLeft', 'downLeft', 'downLeft', 'down', 'down', 'downRight'],
+  ],
 } as const;
 
 /** Brand pattern layer opacity per surface (Refined pattern repair). */
@@ -466,5 +633,5 @@ export const shadow = {
   hover: { offsetY: 8, blur: 24, opacity: 0.16 }, // MOVA · Hover preview
 } as const;
 
-export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity, blur };
+export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity, blur, motion, heroLook };
 export default tokens;

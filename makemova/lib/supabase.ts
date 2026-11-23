@@ -15,7 +15,8 @@ export const supabase = createClient(url ?? 'http://localhost', publishableKey ?
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // On web the password-reset link lands on /update-password with the recovery session in the URL.
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });
 

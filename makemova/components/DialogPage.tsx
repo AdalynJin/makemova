@@ -1,21 +1,21 @@
-import { Image } from 'expo-image';
 import type { ReactNode } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 
-import { asset, dialogShadow, scrim } from '@/lib/ui';
+import { Motion } from '@/components/Motion';
+import { dialogShadow, scrim } from '@/lib/ui';
 import { size } from '@/tokens';
 
-export type DialogMotion = 'brief' | 'revise' | 'tutorials';
+export type DialogMotion = 'brief' | 'revise' | 'tutorials' | 'guide';
 
-/** MOVA · Motion · <name>, Frame=01, as each dialog page places it on the card's top edge. */
-const motions: Record<DialogMotion, { source: number; left: number; width: number; height: number }> = {
-  brief: { source: asset.motionBrief, left: size.motionBriefLeft, width: size.motionBrief, height: size.motionBriefHeight },
-  revise: { source: asset.motionDialogRevise, left: size.motionBriefLeft, width: size.motionRevise96, height: size.motionBriefHeight },
+/** MOVA · Motion · <name> as each dialog page places it on the card's top edge. It plays and loops. */
+const motions: Record<DialogMotion, { left: number; width: number; top: number }> = {
+  brief: { left: size.motionBriefLeft, width: size.motionDialog, top: size.motionBriefTop },
+  revise: { left: size.motionBriefLeft, width: size.motionRevise96, top: size.motionBriefTop },
+  guide: { left: size.motionBriefLeft, width: size.motionDialog, top: size.motionBriefTop },
   tutorials: {
-    source: asset.motionTutorials,
     left: size.motionTutorialsDialogLeft,
     width: size.motionTutorialsDialog,
-    height: size.motionTutorialsDialogHeight,
+    top: size.motionBriefTop + size.motionBriefHeight - size.motionTutorialsDialogHeight,
   },
 };
 
@@ -29,6 +29,8 @@ type Props = {
   /** R5 confirmations and R6 · Brief details have no drop shadow in Figma. */
   shadow?: boolean;
   motion?: DialogMotion;
+  /** A second character on the card edge (R6 · Quick guide shows Opus · Here’s a guide). */
+  extra?: ReactNode;
   children: ReactNode;
 };
 
@@ -43,6 +45,7 @@ export function DialogPage({
   width = 'w-dialog',
   shadow = true,
   motion = 'brief',
+  extra,
   children,
 }: Props) {
   const m = motions[motion];
@@ -57,11 +60,8 @@ export function DialogPage({
           >
             {children}
           </View>
-          <Image
-            source={m.source}
-            style={{ position: 'absolute', left: m.left, top: size.motionBriefTop, width: m.width, height: m.height }}
-            contentFit="contain"
-          />
+          <Motion name={motion} width={m.width} style={{ position: 'absolute', left: m.left, top: m.top }} />
+          {extra}
         </View>
       </View>
     </Modal>

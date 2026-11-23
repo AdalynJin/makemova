@@ -2,14 +2,15 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { AccountScreen } from '@/components/AccountScreen';
+import { AccountNote, AccountScreen } from '@/components/AccountScreen';
 import { AuthField } from '@/components/AuthField';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { exampleDestination } from '@/lib/workspace-rules';
+import { size } from '@/tokens';
 
-/** Figma: Create account (10993:19541) */
+/** Figma: CH00d · Create account (Refined 11125:40864), with the Confirm password field from the audit pass. */
 export default function CreateAccount() {
   const { session } = useAuth();
   const { project } = useLocalSearchParams<{ project?: string }>();
@@ -17,6 +18,8 @@ export default function CreateAccount() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -26,8 +29,13 @@ export default function CreateAccount() {
   async function submit() {
     setError(null);
     setNotice(null);
+    setTried(true);
     if (!name.trim() || !email.trim() || password.length < 8) {
       setError('Add your name, email address and a password of at least 8 characters.');
+      return;
+    }
+    if (confirm !== password) {
+      setError('The two passwords do not match.');
       return;
     }
     setBusy(true);
@@ -47,6 +55,8 @@ export default function CreateAccount() {
     <AccountScreen
       title="Create your account"
       subtitle="Save your projects and pick up where you left off."
+      art={{ crew: 'mateShowTheWay', width: size.peekShowTheWay, left: size.peekShowTheWayLeft }}
+      help
       footer={
         <>
           <Text className="font-regular text-bodySmall text-secondaryText">Already have an account?</Text>
@@ -75,20 +85,21 @@ export default function CreateAccount() {
           autoComplete="new-password"
           value={password}
           onChangeText={setPassword}
-          onSubmitEditing={submit}
           placeholder="At least 8 characters"
         />
+        <AuthField
+          label="Confirm password"
+          secureTextEntry
+          autoComplete="new-password"
+          value={confirm}
+          onChangeText={setConfirm}
+          onSubmitEditing={submit}
+          placeholder="Re-enter your password"
+          error={tried && confirm && confirm !== password ? 'Passwords do not match.' : null}
+        />
       </View>
-      {error && (
-        <View className="rounded-12 bg-selected px-14 py-10">
-          <Text className="font-medium text-labelUi text-ink">{error}</Text>
-        </View>
-      )}
-      {notice && (
-        <View className="rounded-12 bg-compare px-14 py-10">
-          <Text className="font-medium text-labelUi text-ink">{notice}</Text>
-        </View>
-      )}
+      {error && <AccountNote tone="error">{error}</AccountNote>}
+      {notice && <AccountNote tone="notice">{notice}</AccountNote>}
       <Button label="Create account" full busy={busy} onPress={submit} />
     </AccountScreen>
   );
