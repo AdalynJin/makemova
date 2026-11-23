@@ -1,12 +1,16 @@
-import { Redirect, router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native';
+import { Redirect, router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { AppNav } from '@/components/AppNav';
 import { CrewMosaic } from '@/components/CrewMosaic';
 import { Button } from '@/components/Button';
 import { ChooseStart } from '@/components/ChooseStart';
+import { DeletedProjectToast } from '@/components/DeletedProjectToast';
+import { DeleteProjectConfirmation } from '@/components/DeleteProjectConfirmation';
+import { ProjectActions } from '@/components/ProjectActions';
 import { useAuth } from '@/lib/auth';
+import { deleteOnLeave, deleteProject, finishDeletes } from '@/lib/deletes';
 import { supabase } from '@/lib/supabase';
 import type { Project } from '@/lib/types';
 import { softShadow } from '@/lib/ui';
@@ -21,41 +25,118 @@ function edited(iso: string) {
   return `edited ${days} days ago`;
 }
 
-/** Figma: Flow A · My projects (10551:5427) and first visit (10551:5656) */
+/** Figma: R5 · My projects · Compact cards (11125:41069) and CH01b · My projects · First visit (11125:41239) */
 export default function Projects() {
   const { session, loading } = useAuth();
   const userId = session?.user.id;
+  const tokenRef = useRef<string | undefined>(undefined);
+  tokenRef.current = session?.access_token;
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [query, setQuery] = useState('');
   const [attempt, setAttempt] = useState(0);
+  // ⋯ → R5 · Project actions → R5 · Delete project confirmation → "Project deleted." with Undo.
+  const [actionsFor, setActionsFor] = useState<Project | null>(null);
+  const [confirmFor, setConfirmFor] = useState<Project | null>(null);
+  const [pending, setPending] = useState<Project | null>(null);
+  const [deletedAny, setDeletedAny] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const pendingRef = useRef<Project | null>(null);
+  pendingRef.current = pending;
+
+  /** Takes the waiting project off the list for good. Undo is gone once this runs. */
+  const takePending = useCallback(() => {
+    const project = pendingRef.current;
+    if (!project) return null;
+    pendingRef.current = null;
+    setPending(null);
+    setLoad((prev) =>
+      prev.status === 'ready' ? { ...prev, projects: prev.projects.filter((p) => p.id !== project.id) } : prev,
+    );
+    return project;
+  }, []);
+
+  /** Makes the waiting delete for real. If it fails, the list reloads with the project back on it. */
+  const flush = useCallback(() => {
+    if (!userId) return;
+    const project = takePending();
+    if (!project) return;
+    void deleteProject(userId, project.id)
+      .catch(() => false)
+      .then((done) => {
+        if (done) return;
+        setDeleteError('This project could not be deleted. Try again.');
+        setAttempt((value) => value + 1);
+      });
+  }, [takePending, userId]);
+
+  /** The tab is closing, so the delete must not wait for anything. */
+  const flushOnLeave = useCallback(() => {
+    if (!userId || !tokenRef.current) return;
+    const project = takePending();
+    if (project) deleteOnLeave(userId, project.id, tokenRef.current);
+  }, [takePending, userId]);
+
+  // Undo stays available while the toast shows; the delete is made when the designer leaves this page
+  // (another screen, closing the tab, or unmount).
+  useFocusEffect(useCallback(() => flush, [flush]));
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return flush;
+    window.addEventListener('pagehide', flushOnLeave);
+    return () => {
+      window.removeEventListener('pagehide', flushOnLeave);
+      flush();
+    };
+  }, [flush, flushOnLeave]);
+
+  function confirmDelete() {
+    const project = confirmFor;
+    if (!project) return;
+    flush();
+    setConfirmFor(null);
+    setDeleteError(null);
+    pendingRef.current = project;
+    setPending(project);
+    setDeletedAny(true);
+  }
+
+  function undoDelete() {
+    pendingRef.current = null;
+    setPending(null);
+  }
 
   useEffect(() => {
     if (!userId) return;
     let active = true;
-    // RLS returns only the signed-in designer's own projects.
-    void supabase
-      .from('projects')
-      .select('id, owner_id, title, status, skill_focus, created_at')
-      .eq('owner_id', userId)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (!active) return;
-        if (error) setLoad({ status: 'error', message: error.message });
-        else setLoad({ status: 'ready', projects: data ?? [] });
-      });
+    void (async () => {
+      // Deletes a closed tab cut short come first, so those projects never reappear.
+      const hidden = await finishDeletes(userId);
+      // RLS returns only the signed-in designer's own projects.
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, owner_id, title, status, skill_focus, created_at')
+        .eq('owner_id', userId)
+        .order('created_at', { ascending: false });
+      if (!active) return;
+      if (error) setLoad({ status: 'error', message: error.message });
+      else setLoad({ status: 'ready', projects: (data ?? []).filter((p) => !hidden.includes(p.id)) });
+    })();
     return () => { active = false; };
   }, [attempt, userId]);
 
+  const remaining = useMemo(
+    () => (load.status === 'ready' ? load.projects.filter((p) => p.id !== pending?.id) : []),
+    [load, pending],
+  );
   const shown = useMemo(() => {
-    if (load.status !== 'ready') return [];
     const q = query.trim().toLowerCase();
-    return q ? load.projects.filter((p) => p.title.toLowerCase().includes(q)) : load.projects;
-  }, [load, query]);
+    return q ? remaining.filter((p) => p.title.toLowerCase().includes(q)) : remaining;
+  }, [remaining, query]);
 
   if (loading) return null;
   if (!session) return <Redirect href="/sign-in" />;
 
-  const firstVisit = load.status === 'ready' && load.projects.length === 0;
+  const firstVisit = load.status === 'ready' && load.projects.length === 0 && !deletedAny;
+  const allDeleted = load.status === 'ready' && deletedAny && remaining.length === 0;
 
   return (
     <View className="flex-1 bg-paper">
@@ -95,7 +176,9 @@ export default function Projects() {
                 <Text className="font-regular text-bodyUi text-secondaryText">
                   A quick critique costs 5 credits per version. You confirm before it runs.
                 </Text>
-                <Text className="font-semibold text-labelUi text-ink">See every AI credit rate →</Text>
+                <Text accessibilityRole="link" onPress={() => router.push('/account/credits')} className="font-semibold text-labelUi text-ink">
+                  See every AI credit rate →
+                </Text>
               </View>
             </View>
           )}
@@ -106,7 +189,7 @@ export default function Projects() {
                 <View className="gap-8">
                   <Text className="font-bold text-pageTitle text-ink">My projects</Text>
                   <Text className="font-regular text-bodySmall text-secondaryText">
-                    {load.projects.length} {load.projects.length === 1 ? 'project' : 'projects'}
+                    {remaining.length} {remaining.length === 1 ? 'project' : 'projects'}
                   </Text>
                 </View>
                 <Button label="Start a project" width={size.startButton} onPress={() => router.push('/projects/new')} />
@@ -138,7 +221,13 @@ export default function Projects() {
                       <Text numberOfLines={1} className="flex-1 font-semibold text-cardTitle text-ink">
                         {p.title}
                       </Text>
-                      <Text className="px-8 font-bold text-labelUi text-secondaryText">···</Text>
+                      <Button
+                        label="⋯"
+                        variant="quiet"
+                        size="sm"
+                        width={size.controlSmall}
+                        onPress={() => setActionsFor(p)}
+                      />
                     </View>
                     <Text className="font-regular text-bodySmall text-secondaryText">
                       Brief · v1 · {edited(p.created_at)}
@@ -152,10 +241,23 @@ export default function Projects() {
                     />
                   </View>
                 ))}
-                {shown.length === 0 && (
+                {shown.length === 0 && !allDeleted && (
                   <Text className="font-regular text-bodyUi text-secondaryText">No projects match “{query}”.</Text>
                 )}
               </View>
+
+              {/* Figma: No projects yet — shown once the last project is deleted. */}
+              {allDeleted && (
+                <View className="gap-12 bg-paper p-32">
+                  <Text className="font-bold text-heading text-ink">Start your first project.</Text>
+                  <Text className="font-regular text-bodyUi text-secondaryText">
+                    Choose the café brief or bring a screen you want to improve.
+                  </Text>
+                  <Button label="Start a project" width={size.startButton} onPress={() => router.push('/projects/new')} />
+                </View>
+              )}
+              {pending && <DeletedProjectToast onUndo={undoDelete} />}
+              {deleteError && <DeletedProjectToast message={deleteError} />}
 
               <View className="mt-12 border-t border-border" />
               <View className="gap-4 pb-28">
@@ -169,6 +271,20 @@ export default function Projects() {
           )}
         </ScrollView>
       </View>
+
+      <ProjectActions
+        visible={!!actionsFor}
+        onClose={() => setActionsFor(null)}
+        onDelete={() => {
+          setConfirmFor(actionsFor);
+          setActionsFor(null);
+        }}
+      />
+      <DeleteProjectConfirmation
+        project={confirmFor?.title ?? null}
+        onConfirm={confirmDelete}
+        onClose={() => setConfirmFor(null)}
+      />
     </View>
   );
 }

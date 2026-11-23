@@ -3,8 +3,16 @@ import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { ChooseCritiqueFocus, type CritiqueFocus } from '@/components/ChooseCritiqueFocus';
+import { ConfirmCritique } from '@/components/ConfirmCritique';
+import { CritiqueRequest } from '@/components/CritiqueRequest';
 import { Icon } from '@/components/Icon';
-import { asset, cardShadow } from '@/lib/ui';
+import { Motion } from '@/components/Motion';
+import { Sticker } from '@/components/Sticker';
+import { MovaToolCard, type Tool } from '@/components/MovaToolCard';
+import { ToolHoverPreview } from '@/components/ToolHoverPreview';
+import { TutorialsDialog } from '@/components/TutorialsDialog';
+import { asset, cardShadow, toolsShadow } from '@/lib/ui';
 import { color, size, space } from '@/tokens';
 
 const surface = 'gap-16 rounded-24 border border-border bg-white p-16';
@@ -28,16 +36,7 @@ function Caps({ children }: { children: string }) {
 export function BriefPanel({ title, audience, goal }: { title: string; audience: string; goal: string }) {
   return (
     <View>
-      <Image
-        source={asset.peekMateGoal}
-        style={{
-          position: 'absolute',
-          left: size.peekGoalLeft,
-          top: -size.peekMateGoalHeight,
-          width: size.peekMateGoal,
-          height: size.peekMateGoalHeight,
-        }}
-      />
+      <Sticker crew="mateSetTheGoal" width={size.peekMateGoal} style={{ position: 'absolute', left: size.peekGoalLeft, bottom: '100%' }} />
       <View className={`${surface} pb-40`} style={cardShadow}>
         <Text className="font-bold text-briefTitle text-ink">{title}</Text>
         <View className="gap-8">
@@ -57,39 +56,75 @@ export function BriefPanel({ title, audience, goal }: { title: string; audience:
   );
 }
 
-const tools = [
-  { name: 'Critique', intro: 'Find what to improve.', meta: '5 credits / new run', bg: 'bg-critique', edge: asset.edgeCritique },
-  { name: 'Compare', intro: 'View versions side by side.', meta: 'Manual comparison · Free', bg: 'bg-compare', edge: asset.edgeCompare },
-  { name: 'Tutorials', intro: 'Learn a tool or principle.', meta: 'Short guides · Free', bg: 'bg-guidance', edge: asset.edgeTutorials },
-] as const;
+/** The nav shows the same balance (AppNav "368 credits"). */
+const BALANCE = 368;
+const CRITIQUE_COST = 5;
 
-/** Figma: CH03 · Make — R7 Tools (MOVA tool cards). */
-export function MakePanel({ onTool }: { onTool: (name: string) => void }) {
+/**
+ * Figma: R7 · Tools · Fold and unfold (11125:41996) in Flow A · CH03 · Make.
+ * Prototype: hover a card → its MOVA · Hover preview; Critique toggles Critique · One focus only;
+ * Compare opens the comparison; Tutorials opens R5 · Tutorials · Tool & design.
+ */
+export function MakePanel({ version, onCritique, onCompare }: { version: string; onCritique: () => void; onCompare: () => void }) {
+  const [hovered, setHovered] = useState<Tool | null>(null);
+  const [request, setRequest] = useState(false);
+  const [focus, setFocus] = useState<CritiqueFocus>('Main action');
+  const [dialog, setDialog] = useState<'focus' | 'confirm' | 'tutorials' | null>(null);
+
+  function press(tool: Tool) {
+    setHovered(null);
+    if (tool === 'critique') return setRequest(!request);
+    setRequest(false);
+    if (tool === 'compare') return onCompare();
+    setDialog('tutorials');
+  }
+
   return (
-    <View className="gap-16 rounded-24 border border-border bg-white p-24" style={cardShadow}>
+    <View className="gap-16 rounded-24 border border-border bg-white p-24" style={toolsShadow}>
       <View className="flex-row items-center justify-between">
-        <Text className="font-semibold text-cardTitle text-ink">Tools</Text>
-        <Button label="Guidelines" variant="quiet" size="sm" />
+        <Text className="font-semibold text-panelTitle text-ink">Tools</Text>
+        <Button label="Guidelines" variant="paper" size="sm" />
       </View>
       <View className="gap-12">
-        {tools.map((t) => (
-          <Pressable
-            key={t.name}
-            accessibilityRole="button"
-            onPress={() => onTool(t.name)}
-            className={`w-toolCard h-toolCardHeight justify-center gap-4 overflow-hidden rounded-22 px-16 ${t.bg}`}
-          >
-            <Text className="font-bold text-toolTitle text-ink">{t.name}</Text>
-            <Text className="font-regular text-labelSmall text-ink">{t.intro}</Text>
-            <Text className="font-bold text-meta text-ink">{t.meta}</Text>
-            <Image
-              source={t.edge}
-              style={{ position: 'absolute', right: 0, top: 0, width: size.toolEdge, height: size.toolCardHeight }}
-              contentFit="contain"
-            />
-          </Pressable>
+        {(['critique', 'compare', 'tutorials'] as const).map((tool) => (
+          <MovaToolCard
+            key={tool}
+            tool={tool}
+            onPress={() => press(tool)}
+            onHover={(on) => setHovered((cur) => (on ? tool : cur === tool ? null : cur))}
+          />
         ))}
+        {request && (
+          <CritiqueRequest
+            version={version}
+            focus={focus}
+            cost={CRITIQUE_COST}
+            onChange={() => setDialog('focus')}
+            onGetFeedback={() => setDialog('confirm')}
+          />
+        )}
       </View>
+      {hovered && <ToolHoverPreview tool={hovered} />}
+
+      <ChooseCritiqueFocus
+        visible={dialog === 'focus'}
+        onChoose={(f) => {
+          setFocus(f);
+          setDialog(null);
+        }}
+        onClose={() => setDialog(null)}
+      />
+      <ConfirmCritique
+        visible={dialog === 'confirm'}
+        cost={CRITIQUE_COST}
+        balance={BALANCE}
+        onClose={() => setDialog(null)}
+        onConfirm={() => {
+          setDialog(null);
+          onCritique();
+        }}
+      />
+      <TutorialsDialog visible={dialog === 'tutorials'} onClose={() => setDialog(null)} />
     </View>
   );
 }
@@ -194,10 +229,7 @@ export function RevisePanel() {
       <View className="gap-6 pr-64">
         <Text className="font-bold text-heading text-ink">Revise one thing</Text>
         <Text className="font-regular text-labelUi text-secondaryText">Keep pickup strong and make the menu easier to find.</Text>
-        <Image
-          source={asset.motionRevise}
-          style={{ position: 'absolute', right: -space[8], top: -space[8], width: size.motionRevise, height: size.motionReviseHeight }}
-        />
+        <Motion name="revise" width={size.motionRevise} style={{ position: 'absolute', right: -space[8], top: -space[8] }} />
       </View>
       <View className="flex-row items-center gap-10">
         <Caps>STARTING VERSION</Caps>
@@ -250,16 +282,10 @@ export function ReflectPanel({ onBack, onFinish }: { onBack: () => void; onFinis
   );
   return (
     <View>
-      <Image
-        source={asset.motionReflect}
-        style={{
-          position: 'absolute',
-          right: space[64],
-          top: -size.motionReflectHeight + space[28],
-          width: size.motionReflect,
-          height: size.motionReflectHeight,
-          zIndex: 1,
-        }}
+      <Motion
+        name="reflect"
+        width={size.motionReflect}
+        style={{ position: 'absolute', right: space[64], top: -size.motionReflectHeight + space[28], zIndex: 1 }}
       />
       <View className={surface} style={cardShadow}>
         <Text className="font-bold text-heading text-ink">Keep one useful lesson</Text>

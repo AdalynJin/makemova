@@ -15,7 +15,8 @@ export const supabase = createClient(url ?? 'http://localhost', publishableKey ?
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // On web the password-reset link lands on /update-password with the recovery session in the URL.
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });
 
@@ -25,4 +26,17 @@ if (Platform.OS !== 'web') {
     if (state === 'active') supabase.auth.startAutoRefresh();
     else supabase.auth.stopAutoRefresh();
   });
+}
+
+/**
+ * Deletes one row with a request that outlives the page (web, while the tab closes).
+ * RLS still decides what the signed-in designer may delete.
+ */
+export function deleteRowOnLeave(table: string, id: string, accessToken: string) {
+  if (!url || !publishableKey) return;
+  void fetch(`${url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    keepalive: true,
+    headers: { apikey: publishableKey, Authorization: `Bearer ${accessToken}` },
+  }).catch(() => undefined);
 }

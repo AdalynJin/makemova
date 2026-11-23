@@ -2,14 +2,15 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { AccountScreen } from '@/components/AccountScreen';
+import { AccountNote, AccountScreen } from '@/components/AccountScreen';
 import { AuthField } from '@/components/AuthField';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/lib/auth';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { exampleDestination } from '@/lib/workspace-rules';
+import { size } from '@/tokens';
 
-/** Figma: Flow A · Sign in (10551:5196) */
+/** Figma: CH00a · Sign in (Refined 11125:39791) */
 export default function SignIn() {
   const { session } = useAuth();
   const { project } = useLocalSearchParams<{ project?: string }>();
@@ -18,13 +19,11 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   if (session) return <Redirect href={destination} />;
 
   async function submit() {
     setError(null);
-    setNotice(null);
     if (!email.trim() || !password) {
       setError('Enter your email address and password.');
       return;
@@ -36,21 +35,12 @@ export default function SignIn() {
     else router.replace(destination);
   }
 
-  async function forgot() {
-    setError(null);
-    if (!email.trim()) {
-      setError('Enter your email address first.');
-      return;
-    }
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim());
-    if (resetError) setError(resetError.message);
-    else setNotice('Check your email for a reset link.');
-  }
-
   return (
     <AccountScreen
       title="Welcome back"
       subtitle="Sign in to return to your saved projects."
+      art={{ crew: 'mateShowTheWay', width: size.peekShowTheWay, left: size.peekShowTheWayLeft }}
+      help
       footer={
         <>
           <Text className="font-regular text-bodySmall text-secondaryText">New here?</Text>
@@ -86,20 +76,11 @@ export default function SignIn() {
           onSubmitEditing={submit}
           placeholder="Your password"
         />
-        <Pressable accessibilityRole="link" onPress={forgot} className="self-end">
+        <Pressable accessibilityRole="link" onPress={() => router.push('/reset-password')} className="self-end">
           <Text className="font-medium text-labelSmall text-secondaryText">Forgot password?</Text>
         </Pressable>
       </View>
-      {error && (
-        <View className="rounded-12 bg-selected px-14 py-10">
-          <Text className="font-medium text-labelUi text-ink">{error}</Text>
-        </View>
-      )}
-      {notice && (
-        <View className="rounded-12 bg-compare px-14 py-10">
-          <Text className="font-medium text-labelUi text-ink">{notice}</Text>
-        </View>
-      )}
+      {error && <AccountNote tone="error">{error}</AccountNote>}
       <Button label="Sign in" full busy={busy} onPress={submit} />
     </AccountScreen>
   );

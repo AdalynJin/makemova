@@ -4,8 +4,8 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { color, size as s } from '@/tokens';
 
-export type ButtonVariant = 'primary' | 'outline' | 'white' | 'quiet' | 'outlineOnDark' | 'yellowInk';
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'hero';
+export type ButtonVariant = 'primary' | 'secondary' | 'paper' | 'outline' | 'white' | 'quiet' | 'outlineOnDark' | 'yellowInk';
+export type ButtonSize = 'sm' | 'menu' | 'header' | 'md' | 'lg' | 'hero';
 
 type Props = {
   label: string;
@@ -21,15 +21,19 @@ type Props = {
   onPress?: () => void;
 };
 
-const height = { sm: 'h-controlSmall', md: 'h-control', lg: 'h-controlLarge', hero: 'h-heroButton' } as const;
-const pad = { sm: 'px-16', md: 'px-20', lg: 'px-24', hero: 'px-28' } as const;
-const textSize = { sm: 'text-labelUi', md: 'text-labelUi', lg: 'text-bodyUi', hero: 'text-nav' } as const;
+const height = { sm: 'h-controlSmall', menu: 'h-controlHeader', header: 'h-controlHeader', md: 'h-control', lg: 'h-controlLarge', hero: 'h-heroButton' } as const;
+const pad = { sm: 'px-16', menu: 'px-16', header: 'px-20', md: 'px-20', lg: 'px-24', hero: 'px-28' } as const;
+const textSize = { sm: 'text-labelUi', menu: 'text-labelUi', header: 'text-labelUi', md: 'text-labelUi', lg: 'text-bodyUi', hero: 'text-nav' } as const;
 
 const surface: Record<ButtonVariant, { idle: string; hover: string; text: string }> = {
   primary: { idle: 'bg-ink', hover: 'bg-inkHover', text: 'text-white' },
   outline: { idle: 'bg-white border-dash border-ink', hover: 'bg-paper border-dash border-ink', text: 'text-ink' },
   white: { idle: 'bg-white border border-ink', hover: 'bg-paper border border-ink', text: 'text-ink' },
+  // Week 8 Refined R4 Button · Secondary: white, secondary-text stroke.
+  secondary: { idle: 'bg-white border border-secondaryText', hover: 'bg-paper border border-secondaryText', text: 'text-ink' },
   quiet: { idle: 'bg-transparent', hover: 'bg-paper', text: 'text-ink' },
+  // R7 · Tools "Guidelines": a paper pill at rest.
+  paper: { idle: 'bg-paper', hover: 'bg-border', text: 'text-ink' },
   outlineOnDark: { idle: 'border-dash border-white', hover: 'bg-inkRaised border-dash border-white', text: 'text-white' },
   yellowInk: { idle: 'bg-ink', hover: 'bg-inkHover', text: 'text-opusYellow' },
 };
