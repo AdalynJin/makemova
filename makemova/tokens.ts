@@ -250,7 +250,8 @@ export const size = {
   iconXs: 14,
   iconMd: 18,
   iconLg: 22,
-  wordmark: 140,
+  logo: 36, // the orange m, in the app and account navs
+  logoHome: 44, // in the homepage nav
   peekClip: 124,
   // Homepage (10551:4788)
   halfCircleHeight: 12, // half-circle shape (24 × 12)
@@ -361,9 +362,6 @@ export const size = {
   mateShowTheWay: 155.755,
   mateShowTheWayHeight: 150,
   accountBg: 836,
-  wordmarkHeight: 19.89,
-  wordmarkHome: 211.2, // Homepage v3 nav (11337:33920)
-  wordmarkHomeHeight: 31.9,
   navButton: 50, // Homepage v3 · Create account
   badge: 56,
   toolIcon: 72,
@@ -446,7 +444,7 @@ export const size = {
   compareVersaTop: 392,
   compareMarkWidth: 14,
   compareMarkHeight: 12,
-  // The crew · mova puzzle. Letter boxes come from the wordmark at 5 ×.
+  // The crew · mova puzzle. Letter boxes come from the old wordmark at 5 ×.
   puzzle: 1312,
   puzzleHeight: 240,
   puzzleTop: 63.7,
@@ -656,7 +654,7 @@ export const artiGlass = { centre: [159.49, 111.24], radius: 17.48, box: 82, ins
 /** Where light can catch: the inside of the magnifier and of the monocle, and the hand the magnifier grows from. */
 export const artiShine = { lens: [159.49, 111.24, 15.5], eye: [97.47, 119.94, 11.1], grip: [198.34, 150.09] } as const;
 
-/** The four wordmark letters in the mova puzzle: width and scattered position (left, top, degrees) at 1312 wide. */
+/** The four letters in the mova puzzle: width and scattered position (left, top, degrees) at 1312 wide. */
 export const puzzleLetters = {
   m: { width: 174.45, left: 405.5, loose: [60, 40, -12] },
   o: { width: 112.6, left: 586.7, loose: [262, 112, 9] },

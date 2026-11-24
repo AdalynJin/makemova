@@ -4,8 +4,8 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
+import { Logo } from '@/components/Logo';
 import { QuickGuide } from '@/components/QuickGuide';
-import { Wordmark } from '@/components/Wordmark';
 import { useAuth } from '@/lib/auth';
 
 type Props = {
@@ -27,8 +27,8 @@ export function PublicNav({ variant = 'account', onSection }: Props) {
         home ? 'h-homeNavHeight' : 'h-navHeight'
       }`}
     >
-      <View className={`flex-row items-center ${home ? 'gap-56' : 'gap-24'}`}>
-        <Wordmark home={home} />
+      <View className={`flex-row items-center ${home ? 'gap-56' : 'gap-20'}`}>
+        <Logo home={home} />
         <View className={`flex-row items-center ${home ? 'gap-36' : 'gap-18'}`}>
           <Pressable accessibilityRole="link" onPress={() => go('how')}>
             <Text className={link}>How it works</Text>

@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
+import { Logo } from '@/components/Logo';
 import { QuickGuide } from '@/components/QuickGuide';
-import { Wordmark } from '@/components/Wordmark';
 import { useAuth } from '@/lib/auth';
 import { credits } from '@/lib/credits';
 import { supabase } from '@/lib/supabase';
@@ -30,7 +30,7 @@ export function AppNav({ variant = 'projects' }: Props) {
   return (
     <View className="h-navHeight flex-row items-center justify-between border-b border-border bg-white px-64">
       <View className="flex-row items-center gap-20">
-        <Wordmark href="/projects" />
+        <Logo href="/projects" />
         <Pressable
           accessibilityRole="link"
           onPress={() => router.push('/projects')}

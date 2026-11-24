@@ -41,7 +41,7 @@ export const stickerShadow = {
 
 /** Every static Figma export the screens use. */
 export const asset = {
-  wordmark: require('@/assets/figma/wordmark.svg'),
+  logoMark: require('@/assets/figma/logo-mark.svg'),
   heroPreview: require('@/assets/figma/home/workspace-preview.png'),
   visualBring: require('@/assets/figma/home/visual-bring-your-work.png'),
   versionsPreview: require('@/assets/figma/home/versions-preview.png'),
