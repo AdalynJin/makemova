@@ -25,12 +25,15 @@ export const color = {
   compare: '#E4EAFF',
   guidance: '#FFF2B2',
   selected: '#FFEBD6', // current / selected (Move)
+  tutorials: '#FFF6CC', // Tutorials tool card (11159:21034)
+  softBlue: '#E4EAFF', // current version, Explore templates choice, account notice, homepage step 2 (Arti)
+  softPink: '#FFE2F0', // homepage step 3 (Versa)
 
   // Week 8 hi-fi screens (added, not renamed)
   chip: '#F3F2EE', // thumbnails, quiet chips
   sand: '#EFEDE7', // example project section
   canvas: '#F7F7F5', // account and project backgrounds
-  stageDone: '#EEEEEE', // finished stage marker
+  stageDone: '#E3E1DC', // finished stage marker (Ash)
   onDarkMuted: '#C9CBCF', // supporting text on ink
   inkRaised: '#24272A', // card on ink
   inkDivider: '#3A3E42', // divider on ink
@@ -48,7 +51,7 @@ export const color = {
   previewCritique: '#FFE1EE',
   previewCritiqueBorder: '#FFA0C7',
   previewCompare: '#E4EAFF',
-  previewCompareBorder: '#AEBBFF',
+  previewCompareBorder: '#E4EAFF', // no stroke in Figma
   previewTutorials: '#FFF2B4',
   previewTutorialsBorder: '#FFDF49',
 } as const;
@@ -119,6 +122,7 @@ export const textStyle = {
   nav: { size: 16, lineHeight: 24, letterSpacing: 0 },
   bodyUi: { size: 15, lineHeight: 22, letterSpacing: 0 },
   labelUi: { size: 14, lineHeight: 20, letterSpacing: 0 },
+  askTitle: { size: 16, lineHeight: 21, letterSpacing: 0 }, // Visual · Ask about one decision, note title
   bodySmall: { size: 13, lineHeight: 20, letterSpacing: 0 },
   eyebrow: { size: 13, lineHeight: 16, letterSpacing: 1.3 },
   labelSmall: { size: 12, lineHeight: 16, letterSpacing: 0 },
@@ -287,7 +291,8 @@ export const size = {
   crewShape: 240,
   lineUp: 200,
   footerHeight: 170,
-  planCard: 421,
+  planCard: 416,
+  planButton: 54,
   pinDot: 32,
   visualImage: 520,
   visualImageHeight: 332,
@@ -300,19 +305,29 @@ export const size = {
   panelTop: 48,
   panelMake: 368,
   panelMakeLeft: 80,
-  versionTop: 308,
+  versionTop: 306, // one version; each further one lifts the list by half a row
   versionRow: 44,
   versionLabel: 100,
   versionLabelHeight: 34,
   versionDot: 6,
   versionDotCurrent: 8,
-  stageMarker: 18,
+  stageMarker: 20,
   toolCard: 320,
   toolEdge: 121,
   compareCard: 548,
-  compareCardHeight: 402,
-  compareImage: 491,
-  compareImageHeight: 313,
+  compareCardHeight: 346,
+  compareCanvas: 514,
+  compareCanvasHeight: 280,
+  compareImage: 401.6,
+  compareImageHeight: 256,
+  reflectChangedText: 524,
+  reflectPanel: 548, // What I learned, under After
+  reflectPanelLeft: 572, // from the artwork's left edge
+  reflectPanelTop: 436,
+  reflectSurfaceTop: 44,
+  reflectMotionLeft: 398.6, // inside the panel's 1 border
+  reflectMotionTop: -42.3,
+  reflectHeight: 771,
   motionRevise: 66,
   motionReviseHeight: 61,
   motionReflect: 100,
@@ -320,11 +335,12 @@ export const size = {
   peekGoalLeft: 317,
   collapse: 36,
   segment: 4,
-  fileIcon: 28,
+  fileIcon: 36,
   connector16: 16,
   peekMateMoveLeft: 555,
   radioOuter: 16,
   radioInner: 8,
+  radioChosen: 18, // Explain answers
   peekMateMake: 125,
   peekMateMakeHeight: 58,
   peekMateMakeLeft: 479,
@@ -346,6 +362,9 @@ export const size = {
   mateShowTheWayHeight: 150,
   accountBg: 836,
   wordmarkHeight: 19.89,
+  wordmarkHome: 211.2, // Homepage v3 nav (11337:33920)
+  wordmarkHomeHeight: 31.9,
+  navButton: 50, // Homepage v3 · Create account
   badge: 56,
   toolIcon: 72,
 
@@ -371,11 +390,6 @@ export const size = {
   heroMateArtHeight: 319.5,
   heroMateArtLeft: 719, // 750 − 31
   heroMateArtTop: 72, // 188 − 81 − 35
-  heroPupil: 10.1, // Eye ellipse
-  heroPupilHeight: 12.6,
-  heroHighlight: 3.8,
-  heroZoneColumns: 8, // Hover zones: 8 × 4 grid over the 1440 × 818 hero
-  heroZoneRows: 4,
   valueStripHeight: 420,
   valueColumn: 416,
   stepBadge: 56,
@@ -384,15 +398,66 @@ export const size = {
   visualWidth: 760, // how-it-works visual frames
   visualBringHeight: 431,
   visualAskHeight: 462,
-  visualCompareHeight: 529,
+  visualCompareHeight: 659,
   visualBringArtTop: -120.7, // characters rise above the visual frame
-  visualAskArt: 777.1,
-  visualAskArtTop: -78.8,
+  // Visual · Ask about one decision (11125:38958)
+  askCard: 448,
+  askCardHeight: 295.8,
+  askCardLeft: 40,
+  askCardTop: 72,
+  askShot: 420,
+  askShotHeight: 267.8,
+  askPin: 30,
+  askPinTarget: 44,
+  askPinLeft: 43, // 50 − 7: the 44 target sits around the 30 pin
+  askPinTop: 209,
+  askNote: 224,
+  askNoteHeight: 232,
+  askNoteLeft: 500,
+  askNoteTop: 96,
+  askNoteText: 188,
+  askNoteMark: 22,
+  askCaptionTop: 404,
+  askArti: 112,
+  askArtiLeft: 613.6,
+  askArtiTop: 2,
+  askRingLeft: 13.9, // around "Order pickup" inside the 420 shot
+  askRingTop: 134.5,
+  askRing: 83.1,
+  askRingHeight: 19.2,
+  askShotLeft: 55, // the 420 shot inside the visual
+  askShotTop: 87,
+  askLens: 58, // lens radius
+  // Visual · Compare, revise, reflect (11125:39038). One draggable frame replaces the two side-by-side ones.
+  compareCardWidth: 544,
+  compareCardTop: 40,
+  compareSlide: 520,
+  compareSlideHeight: 331.5,
+  compareHandle: 40,
+  compareLine: 3,
+  compareChipsTop: 411.5,
+  compareChip: 34,
+  compareLessonTop: 469,
+  compareLesson: 680,
+  compareLessonHeight: 150,
+  compareLessonText: 600,
+  compareVersa: 111.2,
+  compareVersaLeft: 640,
+  compareVersaTop: 392,
+  compareMarkWidth: 14,
+  compareMarkHeight: 12,
+  // The crew · mova puzzle. Letter boxes come from the wordmark at 5 ×.
+  puzzle: 1312,
+  puzzleHeight: 240,
+  puzzleTop: 63.7,
+  puzzleLetterHeight: 112.55,
+  puzzleSnap: 70,
   versionsPreview: 676,
   versionsPreviewHeight: 500,
   examplePreviewOpus: 84.3, // Example project · Opus
   examplePreviewOpusLeft: 558, // from the versions card's left edge
   examplePreviewOpusTop: -94,
+  crewCardLens: 46, // Arti's lens radius inside the card
   crewCardMate: 157.2, // crew card characters (left, top inside the 310 × 460 card)
   crewCardMateLeft: 59,
   crewCardMateTop: 218.9,
@@ -503,6 +568,8 @@ export const size = {
   toolCopyGap: 3.714,
   toolCardLeft: 14.857,
   toolEdgeWidth: 120.714,
+  toolWash: 208, // Pattern wash, behind the copy and the edge
+  toolWashLeft: 111.429,
   toolPreview: 344, // MOVA · Hover preview
   toolPreviewHeight: 246,
   toolPreviewLeft: -440, // from the tools panel's left edge (anchor x −360, panel x 80)
@@ -574,32 +641,95 @@ export const motion = {
 } as const;
 
 /**
- * Figma: Hero · Mate looks (11523:36009). Pupil top-left inside the exported Mate art for each Look variant;
- * highlight sits 5.2, 1.7 from its pupil. Zones map the 8 × 4 hover grid to a Look, row by row.
+ * Crew v3 split into layers (assets/figma/crew-layers) so one part can move. Coordinates are SVG units of `view`.
+ * render = where the art sits against the sticker frame; pivot = shoulder or elbow the moving arm turns around.
  */
-export const heroLook = {
-  pupils: [
-    [129.8, 120.1],
-    [172.5, 115.6],
-  ],
-  highlight: [5.2, 1.7],
-  offset: {
-    center: [0, 0],
-    left: [-11.16, 1.9],
-    right: [4.84, 1.9],
-    up: [-3.16, -5.1],
-    down: [-3.16, 8.9],
-    upLeft: [-11.16, -5.1],
-    upRight: [4.84, -5.1],
-    downLeft: [-11.16, 8.9],
-    downRight: [4.84, 8.9],
+export const crewLayers = {
+  mate: { view: [233, 245], pivot: [173, 112], render: [-28, -78.7, 214.2, 225.4] },
+  versa: { view: [184, 197], pivot: [129.5, 62], render: [-35, -31.4, 140.9, 150.9] },
+  opus: { view: [219, 230], pivot: [0, 0], render: [-56.2, -85, 198.2, 208.6] },
+  arti: { view: [234, 246], pivot: [166, 143], render: [-30.8, -80.8, 194.2, 204.3] },
+} as const;
+
+/** Arti's magnifier, in Arti's SVG units: ring centre and radius, and the square the lens layers are cut from. */
+export const artiGlass = { centre: [159.49, 111.24], radius: 17.48, box: 82, inset: 30 } as const;
+/** Where light can catch: the inside of the magnifier and of the monocle, and the hand the magnifier grows from. */
+export const artiShine = { lens: [159.49, 111.24, 15.5], eye: [97.47, 119.94, 11.1], grip: [198.34, 150.09] } as const;
+
+/** The four wordmark letters in the mova puzzle: width and scattered position (left, top, degrees) at 1312 wide. */
+export const puzzleLetters = {
+  m: { width: 174.45, left: 405.5, loose: [60, 40, -12] },
+  o: { width: 112.6, left: 586.7, loose: [262, 112, 9] },
+  v: { width: 112.55, left: 690.3, loose: [940, 106, -7] },
+  a: { width: 112.55, left: 793.85, loose: [1124, 36, 14] },
+} as const;
+
+/** Homepage motion: durations in ms, distances in px or SVG units, curves as cubic-bezier. */
+export const play = {
+  easeOut: [0.16, 1, 0.3, 1],
+  overshoot: [0.34, 1.56, 0.64, 1], // characters and letters only
+  hover: 180,
+  settle: 260,
+  look: 220,
+  slide: 600,
+  ring: 600,
+  snap: 550,
+  hop: 600,
+  hopStagger: 90,
+  hopHeight: 22,
+  words: 800,
+  wordStagger: 80,
+  wordRise: 40,
+  highlight: 600,
+  highlightDelay: 700,
+  lift: 4,
+  tapSlop: 5, // px a press may wander and still count as a tap
+  pinScale: 1.15,
+  dim: 0.38,
+  eyeReach: 4, // SVG units
+  lookDistance: 120, // px from Mate's face at which the eyes reach their full offset
+  lookBase: [-3.16, 1.9], // Hero · Mate looks: centre of the eight looks
+  lookReach: [8, 7],
+  compareKeyStep: 5, // percent
+  lensFly: 420,
+  lensZoom: 1.8,
+  findSlop: 28, // px around "Order pickup" that counts as found
+  helloDelay: 1500, // after the title has settled
+  aimHero: 9, // degrees Mate's raised arm leans toward the pointer
+  aimReach: 520, // px from Mate at which the arm is at its furthest
+  aimArti: 12,
+  pull: [-24, 8], // Versa's raised arm, degrees, with the handle at v3 and at v2
+  lean: [-5, 5], // Versa's body, same ends
+  pickedAt: 3, // percent: dragged this close to v3 counts as choosing it
+  crewHop: { ms: 620, at: [0, 0.14, 0.45, 0.76, 0.88, 1], y: [0, 0, -0.09, 0, 0, 0], squash: [1, 0.95, 1.03, 0.95, 1.01, 1] }, // y as a share of the height
+  // Keyframes: position 0–1, then the value
+  // Characters: every move eases in and out. Spring speeds are per second; a higher number follows more closely.
+  glide: 7, // eyes, arms, bodies
+  lensGlide: 16, // the magnifier behind the mouse
+  strollGlide: 4, // footer crew
+  act: {
+    mate: { ms: 2200, arm: 15, swings: 3, lean: 1.5 }, // waves hi
+    versa: { ms: 3400, arm: 12, lean: 5, eyes: 4 }, // weighs one side, then the other, then picks
+    opus: { ms: 3600, lean: 4, eyesX: 4, eyesDown: 3, eyesUp: 3 }, // reads two lines, then "aha"
+    arti: { ms: 3000, arm: 7, lean: 2, swell: 0.32 }, // the magnifier grows, then the glass catches the light
   },
-  zones: [
-    ['left', 'left', 'left', 'left', 'left', 'upLeft', 'upRight', 'right'],
-    ['left', 'left', 'left', 'left', 'downLeft', 'downLeft', 'downRight', 'downRight'],
-    ['left', 'left', 'downLeft', 'downLeft', 'downLeft', 'down', 'down', 'downRight'],
-    ['downLeft', 'downLeft', 'downLeft', 'downLeft', 'downLeft', 'down', 'down', 'downRight'],
-  ],
+  seesaw: 3.5, // degrees Versa's ink shape tips while comparing
+  swell: 0.16, // how much the loose magnifier grows when it finds something
+  glintAngle: 24,
+  glintOpacity: 0.85,
+  hiEvery: 4600, // hero Mate says hi again
+  idleEvery: 6500, // one quiet act when the section is on screen
+  turnEvery: 4200, // the four helpers act one after another
+  firstTurn: 900,
+  strollEvery: 5200,
+  strollIn: 150, // px the footer crew walks in from
+  strollSpeed: 120, // px per second
+  strollReach: 56, // px they come toward the pointer
+  strollPull: 0.14,
+  strollIdle: 34,
+  stride: 26, // px per step
+  stepTilt: 3.2, // degrees
+  stepLift: 4, // px
 } as const;
 
 /** Brand pattern layer opacity per surface (Refined pattern repair). */
@@ -620,6 +750,7 @@ export const border = {
   focus: 2, // the field you are typing in
   dash: 1.5, // drop zones, drafts, locked steps (dashed)
   chosen: 3, // chosen version
+  radio: 5, // chosen answer
 } as const;
 
 /** Card shadow from the Week 8 hi-fi (0 8 24, 14%). */
@@ -631,7 +762,8 @@ export const shadow = {
   dialog: { offsetY: 16, blur: 48, spread: -8, opacity: 0.12, nearOffsetY: 2, nearBlur: 6, nearOpacity: 0.06 },
   tools: { offsetY: 10, blur: 28, opacity: 0.14 }, // R7 · Tools panel
   hover: { offsetY: 8, blur: 24, opacity: 0.16 }, // MOVA · Hover preview
+  sticker: { offsetY: 2, blur: 3, opacity: 0.14 }, // crew sticker
 } as const;
 
-export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity, blur, motion, heroLook };
+export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity, blur, motion, crewLayers, artiGlass, artiShine, puzzleLetters, play };
 export default tokens;

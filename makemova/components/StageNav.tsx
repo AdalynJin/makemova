@@ -17,18 +17,18 @@ type Props = { current: Stage; onChange: (s: Stage) => void };
 export function StageNav({ current, onChange }: Props) {
   const at = stages.findIndex((s) => s.id === current);
   return (
-    <View className="flex-row items-center gap-8">
+    <View className="flex-row items-center gap-4">
       {stages.map((s, i) => {
         const done = i < at;
         const active = i === at;
         return (
-          <View key={s.id} className="flex-row items-center gap-8">
+          <View key={s.id} className="flex-row items-center gap-4">
             {i > 0 && <View className="w-connector16 border-t border-secondaryText" />}
             <Pressable
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
               onPress={() => onChange(s.id)}
-              className={`h-stageButton flex-row items-center gap-8 rounded-10 px-10 ${active ? 'bg-ink' : ''}`}
+              className={`h-stageButton flex-row items-center gap-8 rounded-10 ${active ? 'bg-ink px-12' : 'px-8'}`}
             >
               <View
                 className={`h-stageMarker w-stageMarker items-center justify-center rounded-pill ${
@@ -41,7 +41,7 @@ export function StageNav({ current, onChange }: Props) {
                   <Text className={`font-medium text-meta ${active ? 'text-ink' : 'text-secondaryText'}`}>{i + 1}</Text>
                 )}
               </View>
-              <Text className={`font-medium text-labelSmall ${active ? 'text-white' : 'text-secondaryText'}`}>
+              <Text className={`font-medium text-labelSmall ${active ? 'text-white' : done ? 'text-ink' : 'text-secondaryText'}`}>
                 {s.label}
               </Text>
             </Pressable>

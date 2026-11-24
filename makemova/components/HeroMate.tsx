@@ -1,45 +1,89 @@
-import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Animated, Platform, Pressable } from 'react-native';
 
-import { asset } from '@/lib/ui';
-import { heroLook, size } from '@/tokens';
+import { CrewLayers } from '@/components/CrewFigure';
+import { useEvery, useGlide, useInView, useReducedMotion } from '@/lib/motion';
+import { crewLayers, play, size } from '@/tokens';
 
-type Look = keyof typeof heroLook.offset;
+/** Between Mate's lenses, as a share of the art. */
+const FACE = [0.502, 0.393];
 
 /**
  * Figma: Hero · Mate looks (interactive) (11523:36622, set 11523:36009).
- * In the prototype, 32 hover zones (8 × 4) over the hero swap Mate's Look variant.
- * Here the same zone table picks the Look from the pointer position, and only the pupils move.
- * Mate keeps the last look when the pointer leaves, as the prototype does. Web only; elsewhere Mate looks ahead.
+ * The prototype swaps nine Look variants from hover zones. Here the eyes follow the pointer between those same
+ * extremes and the raised arm leans after it. Mate says hi once the title is in and again every few seconds, waves
+ * back when the pointer comes close, and hops when pressed.
  */
 export function HeroMate() {
+  const reduced = useReducedMotion();
   const box = useRef<unknown>(null);
-  const [look, setLook] = useState<Look>('center');
+  const look = useRef(new Animated.ValueXY()).current;
+  const aim = useRef(new Animated.Value(0)).current;
+  const [turn, setTurn] = useState(0);
+  const [hop, setHop] = useState(0);
+  const wave = () => setTurn((t) => t + 1);
+
+  const glide = useGlide([0, 0, 0], ([x, y, arm]) => {
+    look.setValue({ x, y });
+    aim.setValue(arm);
+  });
+  const inView = useInView(box);
+  useEvery(play.hiEvery, wave, inView && !reduced, play.helloDelay);
 
   useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-    const onMove = (e: MouseEvent) => {
-      const el = box.current as unknown as HTMLElement | null;
-      const hero = el?.parentElement;
-      if (!hero) return;
-      const r = hero.getBoundingClientRect();
-      const x = e.clientX - r.left;
-      const y = e.clientY - r.top;
-      if (x < 0 || y < 0 || x >= r.width || y >= r.height) return;
-      const col = Math.min(size.heroZoneColumns - 1, Math.floor((x / r.width) * size.heroZoneColumns));
-      const row = Math.min(size.heroZoneRows - 1, Math.floor((y / r.height) * size.heroZoneRows));
-      setLook(heroLook.zones[row][col]);
+    if (Platform.OS !== 'web' || typeof window === 'undefined' || reduced) return;
+    const scale = size.heroMateArt / crewLayers.mate.view[0];
+    let frame = 0;
+    let inside = false;
+    const to = (x: number, y: number, arm = 0) => glide.to([x / scale, y / scale, arm]);
+    const onMove = (e: PointerEvent) => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const el = box.current as HTMLElement | null;
+        const hero = el?.parentElement;
+        if (!el || !hero) return;
+        const h = hero.getBoundingClientRect();
+        if (e.clientX < h.left || e.clientX > h.right || e.clientY < h.top || e.clientY > h.bottom) {
+          if (inside) to(0, 0);
+          inside = false;
+          return;
+        }
+        inside = true;
+        const m = el.getBoundingClientRect();
+        const dx = e.clientX - (m.left + m.width * FACE[0]);
+        const dy = e.clientY - (m.top + m.height * FACE[1]);
+        const d = Math.hypot(dx, dy) || 1;
+        const k = Math.min(1, d / play.lookDistance);
+        const arm = Math.max(-1, Math.min(1, dx / play.aimReach)) * play.aimHero;
+        to((play.lookBase[0] + (dx / d) * play.lookReach[0]) * k, (play.lookBase[1] + (dy / d) * play.lookReach[1]) * k, arm);
+      });
     };
-    window.addEventListener('mousemove', onMove);
-    return () => window.removeEventListener('mousemove', onMove);
-  }, []);
+    const onLeave = () => {
+      cancelAnimationFrame(frame);
+      inside = false;
+      to(0, 0);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerdown', onMove);
+    document.documentElement.addEventListener('pointerleave', onLeave);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerdown', onMove);
+      document.documentElement.removeEventListener('pointerleave', onLeave);
+    };
+  }, [glide, reduced]);
 
-  const [dx, dy] = heroLook.offset[look];
   return (
-    <View
+    <Pressable
       ref={box as never}
-      pointerEvents="none"
+      accessibilityRole="button"
+      accessibilityLabel="Say hi to Mate"
+      onHoverIn={wave}
+      onPress={() => {
+        wave();
+        setHop((h) => h + 1);
+      }}
       style={{
         position: 'absolute',
         left: size.heroMateArtLeft,
@@ -48,25 +92,7 @@ export function HeroMate() {
         height: size.heroMateArtHeight,
       }}
     >
-      <Image source={asset.heroMate} style={{ width: size.heroMateArt, height: size.heroMateArtHeight }} contentFit="fill" />
-      {heroLook.pupils.map(([px, py]) => (
-        <View
-          key={px}
-          className="rounded-pill bg-ink"
-          style={{ position: 'absolute', left: px + dx, top: py + dy, width: size.heroPupil, height: size.heroPupilHeight }}
-        >
-          <View
-            className="rounded-pill bg-white"
-            style={{
-              position: 'absolute',
-              left: heroLook.highlight[0],
-              top: heroLook.highlight[1],
-              width: size.heroHighlight,
-              height: size.heroHighlight,
-            }}
-          />
-        </View>
-      ))}
-    </View>
+      <CrewLayers crew="mate" width={size.heroMateArt} height={size.heroMateArtHeight} look={look} aim={aim} turn={turn} hop={hop} />
+    </Pressable>
   );
 }

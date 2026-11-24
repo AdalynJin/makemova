@@ -4,8 +4,8 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { color, size as s } from '@/tokens';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'paper' | 'outline' | 'white' | 'quiet' | 'outlineOnDark' | 'yellowInk';
-export type ButtonSize = 'sm' | 'menu' | 'header' | 'md' | 'lg' | 'hero';
+export type ButtonVariant = 'primary' | 'secondary' | 'ash' | 'paper' | 'outline' | 'white' | 'quiet' | 'outlineOnDark' | 'yellowInk';
+export type ButtonSize = 'sm' | 'menu' | 'header' | 'md' | 'lg' | 'nav' | 'plan' | 'hero';
 
 type Props = {
   label: string;
@@ -21,9 +21,9 @@ type Props = {
   onPress?: () => void;
 };
 
-const height = { sm: 'h-controlSmall', menu: 'h-controlHeader', header: 'h-controlHeader', md: 'h-control', lg: 'h-controlLarge', hero: 'h-heroButton' } as const;
-const pad = { sm: 'px-16', menu: 'px-16', header: 'px-20', md: 'px-20', lg: 'px-24', hero: 'px-28' } as const;
-const textSize = { sm: 'text-labelUi', menu: 'text-labelUi', header: 'text-labelUi', md: 'text-labelUi', lg: 'text-bodyUi', hero: 'text-nav' } as const;
+const height = { sm: 'h-controlSmall', menu: 'h-controlHeader', header: 'h-controlHeader', md: 'h-control', lg: 'h-controlLarge', nav: 'h-navButton', plan: 'h-planButton', hero: 'h-heroButton' } as const;
+const pad = { sm: 'px-16', menu: 'px-16', header: 'px-20', md: 'px-20', lg: 'px-24', nav: 'px-28', plan: 'px-24', hero: 'px-28' } as const;
+const textSize = { sm: 'text-labelUi', menu: 'text-labelUi', header: 'text-labelUi', md: 'text-labelUi', lg: 'text-bodyUi', nav: 'text-nav', plan: 'text-nav', hero: 'text-nav' } as const;
 
 const surface: Record<ButtonVariant, { idle: string; hover: string; text: string }> = {
   primary: { idle: 'bg-ink', hover: 'bg-inkHover', text: 'text-white' },
@@ -31,6 +31,8 @@ const surface: Record<ButtonVariant, { idle: string; hover: string; text: string
   white: { idle: 'bg-white border border-ink', hover: 'bg-paper border border-ink', text: 'text-ink' },
   // Week 8 Refined R4 Button · Secondary: white, secondary-text stroke.
   secondary: { idle: 'bg-white border border-secondaryText', hover: 'bg-paper border border-secondaryText', text: 'text-ink' },
+  // R4 Button · quiet outline: white, Ash stroke.
+  ash: { idle: 'bg-white border border-border', hover: 'bg-paper border border-border', text: 'text-ink' },
   quiet: { idle: 'bg-transparent', hover: 'bg-paper', text: 'text-ink' },
   // R7 · Tools "Guidelines": a paper pill at rest.
   paper: { idle: 'bg-paper', hover: 'bg-border', text: 'text-ink' },
@@ -73,10 +75,10 @@ export function Button({
       ) : (
         <View className="flex-row items-center gap-8">
           {leading && <Icon name={leading} />}
-          <Text className={`font-semibold ${textSize[size]} ${v.text} ${size === 'hero' ? 'font-bold' : ''}`}>
+          <Text className={`font-semibold ${textSize[size]} ${v.text} ${size === 'hero' || size === 'nav' || size === 'plan' ? 'font-bold' : ''}`}>
             {label}
           </Text>
-          {arrow && <Icon name={onInk ? 'arrowRightWhite' : 'arrowRight'} size={size === 'hero' ? s.icon : s.iconSmall} />}
+          {arrow && <Icon name={onInk ? 'arrowRightWhite' : 'arrowRight'} size={size === 'hero' || size === 'nav' || size === 'header' ? s.icon : s.iconSmall} />}
         </View>
       )}
     </Pressable>

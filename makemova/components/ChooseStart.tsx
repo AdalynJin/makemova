@@ -22,7 +22,7 @@ export function ChooseStart() {
         </Text>
         <Button label="Choose your work →" size="lg" full onPress={() => router.push('/projects/new')} />
       </View>
-      <View className="w-choiceCard h-choiceCardHeight gap-18 rounded-24 bg-compare p-28" style={softShadow}>
+      <View className="w-choiceCard h-choiceCardHeight gap-18 rounded-24 bg-softBlue p-28" style={softShadow}>
         <Sticker crew="artiInspect" width={size.peekArti} style={{ position: 'absolute', left: size.peekArtiLeft, bottom: '100%' }} />
         <Text className="font-medium text-labelSmall text-ink">GUIDED PRACTICE</Text>
         <Text className="font-bold text-choiceTitle text-ink">Explore practice templates</Text>

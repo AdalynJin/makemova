@@ -48,7 +48,7 @@ export function ToolHoverPreview({ tool }: { tool: Tool }) {
       <Text className="font-bold text-previewName text-ink">{p.name}</Text>
       <Text className="w-toolPreviewIntro font-regular text-previewIntro text-ink">{p.intro}</Text>
       <View className="h-toolPreviewShotHeight w-toolPreviewShot overflow-hidden rounded-12 bg-white">
-        <Image source={p.shot} style={{ flex: 1 }} contentFit="cover" />
+        <Image source={p.shot} style={{ flex: 1 }} contentFit="contain" />
       </View>
       <Motion
         name={p.motion}

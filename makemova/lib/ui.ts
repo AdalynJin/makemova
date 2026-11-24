@@ -34,13 +34,16 @@ export const hoverShadow = {
   boxShadow: `0px ${shadow.hover.offsetY}px ${shadow.hover.blur}px ${alpha(color.hoverShadow, shadow.hover.opacity)}`,
 };
 
+/** Crew sticker drop shadow, drawn around the art itself (web). */
+export const stickerShadow = {
+  filter: `drop-shadow(0px ${shadow.sticker.offsetY}px ${shadow.sticker.blur}px ${alpha(color.ink, shadow.sticker.opacity)})`,
+} as object;
+
 /** Every static Figma export the screens use. */
 export const asset = {
   wordmark: require('@/assets/figma/wordmark.svg'),
   heroPreview: require('@/assets/figma/home/workspace-preview.png'),
   visualBring: require('@/assets/figma/home/visual-bring-your-work.png'),
-  visualAsk: require('@/assets/figma/home/visual-ask-one-decision.png'),
-  visualCompare: require('@/assets/figma/home/visual-compare-revise-reflect.png'),
   versionsPreview: require('@/assets/figma/home/versions-preview.png'),
   step1: require('@/assets/figma/home/step-1.svg'),
   step2: require('@/assets/figma/home/step-2.svg'),
@@ -62,7 +65,54 @@ export const asset = {
     mateMoveIt: require('@/assets/figma/crew-v3/peek-mate-move-it.png'),
     opusGuide: require('@/assets/figma/crew-v3/peek-opus-guide.png'),
   },
-  heroMate: require('@/assets/figma/crew-v3/hero-mate-no-pupils.png'),
+  /** Crew v3 in layers, back to front. The arm, hand and eyes layers move. */
+  crewLayers: {
+    mate: {
+      back: require('@/assets/figma/crew-layers/mate-back.svg'),
+      arm: require('@/assets/figma/crew-layers/mate-arm.svg'),
+      body: require('@/assets/figma/crew-layers/mate-body.svg'),
+      hand: require('@/assets/figma/crew-layers/mate-hand.svg'),
+      eyes: require('@/assets/figma/crew-layers/mate-eyes.svg'),
+    },
+    versa: {
+      back: require('@/assets/figma/crew-layers/versa-back.svg'),
+      arm: require('@/assets/figma/crew-layers/versa-arm.svg'),
+      body: require('@/assets/figma/crew-layers/versa-body.svg'),
+      hand: require('@/assets/figma/crew-layers/versa-hand.svg'),
+      eyes: require('@/assets/figma/crew-layers/versa-eyes.svg'),
+    },
+    opus: {
+      back: require('@/assets/figma/crew-layers/opus-back.svg'),
+      body: require('@/assets/figma/crew-layers/opus-body.svg'),
+      eyes: require('@/assets/figma/crew-layers/opus-eyes.svg'),
+    },
+    arti: {
+      back: require('@/assets/figma/crew-layers/arti-back.svg'),
+      glassBack: require('@/assets/figma/crew-layers/arti-glass-back.svg'),
+      arm: require('@/assets/figma/crew-layers/arti-arm.svg'),
+      body: require('@/assets/figma/crew-layers/arti-body.svg'),
+      glass: require('@/assets/figma/crew-layers/arti-glass.svg'),
+      hand: require('@/assets/figma/crew-layers/arti-hand.svg'),
+    },
+  },
+  /** Arti's magnifier on its own, in three layers: die-cut edge, ring and handle, glass tint and marks. */
+  lens: {
+    back: require('@/assets/figma/crew-layers/lens-back.svg'),
+    ring: require('@/assets/figma/crew-layers/lens-ring.svg'),
+    marks: require('@/assets/figma/crew-layers/lens-marks.svg'),
+  },
+  letter: {
+    m: require('@/assets/figma/crew-layers/letter-m.svg'),
+    o: require('@/assets/figma/crew-layers/letter-o.svg'),
+    v: require('@/assets/figma/crew-layers/letter-v.svg'),
+    a: require('@/assets/figma/crew-layers/letter-a.svg'),
+  },
+  letterSlot: {
+    m: require('@/assets/figma/crew-layers/slot-m.svg'),
+    o: require('@/assets/figma/crew-layers/slot-o.svg'),
+    v: require('@/assets/figma/crew-layers/slot-v.svg'),
+    a: require('@/assets/figma/crew-layers/slot-a.svg'),
+  },
   motion: {
     brief: require('@/assets/figma/motion/brief.png'),
     revise: require('@/assets/figma/motion/revise.png'),
@@ -83,6 +133,9 @@ export const asset = {
   edgeCritique: require('@/assets/figma/tool-edge-critique.svg'),
   edgeCompare: require('@/assets/figma/tool-edge-compare.svg'),
   edgeTutorials: require('@/assets/figma/tool-edge-tutorials.svg'),
+  washCritique: require('@/assets/figma/tool-wash-critique.svg'),
+  washCompare: require('@/assets/figma/tool-wash-compare.svg'),
+  washTutorials: require('@/assets/figma/tool-wash-tutorials.svg'),
   previewShotCritique: require('@/assets/figma/hover-preview-critique.png'),
   previewShotCompare: require('@/assets/figma/hover-preview-compare.png'),
   previewShotTutorials: require('@/assets/figma/hover-preview-tutorials.png'),
@@ -91,6 +144,7 @@ export const asset = {
   planFree: require('@/assets/figma/plan-free.svg'),
   planPass: require('@/assets/figma/plan-pass.svg'),
   planStudio: require('@/assets/figma/plan-studio.svg'),
+  chosenMark: require('@/assets/figma/chosen-mark.svg'),
   planNote: require('@/assets/figma/plan-note.svg'),
   checkWhite: require('@/assets/figma/check-white.svg'),
   checkInk: require('@/assets/figma/check-ink.svg'),

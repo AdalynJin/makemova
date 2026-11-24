@@ -70,7 +70,7 @@ export function AccountScreen({ title, subtitle, icon = 'folder', art, children,
 /** Inline error / notice inside an auth card. */
 export function AccountNote({ tone, children }: { tone: 'error' | 'notice'; children: string }) {
   return (
-    <View className={`rounded-12 px-14 py-10 ${tone === 'error' ? 'bg-selected' : 'bg-compare'}`}>
+    <View className={`rounded-12 px-14 py-10 ${tone === 'error' ? 'bg-selected' : 'bg-softBlue'}`}>
       <Text className="font-medium text-labelUi text-ink">{children}</Text>
     </View>
   );
