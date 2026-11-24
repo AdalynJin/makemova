@@ -1,0 +1,13 @@
+name: Publish website
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  deploy:
+    type: deploy
+    name: Publish to makemova.expo.app
+    environment: production
+    params:
+      prod: true
