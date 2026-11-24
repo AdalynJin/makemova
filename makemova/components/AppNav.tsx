@@ -13,6 +13,8 @@ import { size } from '@/tokens';
 type Props = {
   /** projects: "My projects" is the active link. workspace: a back pill to My projects. */
   variant?: 'projects' | 'workspace';
+  /** The balance after this session's critiques (the prototype's creditDisplay). */
+  balance?: number;
 };
 
 function initials(name?: string | null, email?: string | null) {
@@ -23,7 +25,7 @@ function initials(name?: string | null, email?: string | null) {
 }
 
 /** Figma: R4/Nav · App */
-export function AppNav({ variant = 'projects' }: Props) {
+export function AppNav({ variant = 'projects', balance = credits.remaining }: Props) {
   const { session } = useAuth();
   const meta = session?.user.user_metadata as { display_name?: string } | undefined;
   const [guide, setGuide] = useState(false);
@@ -51,7 +53,7 @@ export function AppNav({ variant = 'projects' }: Props) {
           className="h-controlSmall flex-row items-center gap-6 rounded-10 border border-border bg-white px-12"
         >
           <Icon name="zap" />
-          <Text className="font-semibold text-labelUi text-ink">{`${credits.remaining} credits`}</Text>
+          <Text className="font-semibold text-labelUi text-ink">{`${balance} credits`}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"

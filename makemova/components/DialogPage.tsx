@@ -25,10 +25,11 @@ type Props = {
   /** Card corner radius class: R4 dialogs use rounded-24, R5 and R6 dialogs rounded-10. */
   radius?: 'rounded-24' | 'rounded-10';
   /** Card width class: 560 (R4, R6), 480 (R5 confirmations) or 240 (R5 · Project actions). */
-  width?: 'w-dialog' | 'w-dialogSmall' | 'w-projectActions';
+  width?: 'w-dialog' | 'w-dialogSmall' | 'w-projectActions' | 'w-dialogTutorial' | 'w-dialogRecord' | 'w-dialogSummary';
   /** R5 confirmations and R6 · Brief details have no drop shadow in Figma. */
   shadow?: boolean;
-  motion?: DialogMotion;
+  /** Dialogs without a character on the card edge (Own project · Add a version and its swaps). */
+  motion?: DialogMotion | null;
   /** A second character on the card edge (R6 · Quick guide shows Opus · Here’s a guide). */
   extra?: ReactNode;
   children: ReactNode;
@@ -48,7 +49,7 @@ export function DialogPage({
   extra,
   children,
 }: Props) {
-  const m = motions[motion];
+  const m = motion ? motions[motion] : null;
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 items-center justify-center" style={scrim}>
@@ -60,7 +61,7 @@ export function DialogPage({
           >
             {children}
           </View>
-          <Motion name={motion} width={m.width} style={{ position: 'absolute', left: m.left, top: m.top }} />
+          {m && motion && <Motion name={motion} width={m.width} style={{ position: 'absolute', left: m.left, top: m.top }} />}
           {extra}
         </View>
       </View>

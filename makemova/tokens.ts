@@ -127,6 +127,8 @@ export const textStyle = {
   eyebrow: { size: 13, lineHeight: 16, letterSpacing: 1.3 },
   labelSmall: { size: 12, lineHeight: 16, letterSpacing: 0 },
   meta: { size: 11, lineHeight: 14, letterSpacing: 0.22 },
+  pinSource: { size: 11, lineHeight: 16, letterSpacing: 0.8 }, // Feedback pin · Source (11125:65114)
+  pinNumber: { size: 10, lineHeight: 12, letterSpacing: 0 }, // Feedback pin · Number (11125:65102)
   // MOVA tool card · 8.2 icon edge (11159:20888): the card is drawn at 104 / 140 scale
   toolName: { size: 16.714, lineHeight: 22.286, letterSpacing: 0 },
   toolIntro: { size: 12.071, lineHeight: 16.714, letterSpacing: 0 },
@@ -598,6 +600,29 @@ export const size = {
   // R5 · Choose left / right version (11125:60079, 60104)
   versionIcon: 24,
   versionView: 144,
+  // Prototype flow sync (Refined 11085:17520): the workspace is the 1440 frame, centred in wider windows.
+  versionThumb: 56, // Own project · Saved versions row thumbnail, version hover preview
+  versionThumbHeight: 40,
+  versionHoverPreview: 216, // Version · Select thumbnail (R9 · Versions sidebar)
+  versionHoverPreviewHeight: 138,
+  portraitMaxHeight: 640, // a tall screen (phone UI) is shown whole, at most this tall
+  compareSlotHeight: 364, // Own project · Add a comparison version (11125:44606)
+  addVersionMark: 40, // the round plus in the empty B slot
+  feedbackPin: 32, // Makemova / Feedback pin / Versa (11125:65033)
+  feedbackPinCard: 240,
+  feedbackPin1Left: 243, // Feedback 1 · vN at 403,486 on a 1088 × 694 artwork drawn at 160,152
+  feedbackPin2Left: 442, // Feedback 2 · vN at 602,486
+  feedbackPinTop: 334,
+  critiqueToast: 314, // Critique saved · Status cue (11125:42048)
+  critiqueToastRight: 36,
+  critiqueToastBottom: 16,
+  dialogTutorial: 640, // R5 · Tutorial · Make the main action stand out (11125:60346)
+  dialogRecord: 512, // R6 · Saved record (11125:60310), R6 · Saved decision (11125:60284)
+  dialogSummary: 600, // R4 · Dialog · Project summary (11125:60402)
+  decisionPanel: 448, // Own project · Context panel · Explain your choice
+  chosenVersion: 792, // Own project · Chosen vN (11125:44606)
+  chosenVersionHeight: 510,
+  reflectField: 64, // What I learned answers
 } as const;
 
 /**
@@ -713,6 +738,15 @@ export const play = {
   },
   seesaw: 3.5, // degrees Versa's ink shape tips while comparing
   swell: 0.16, // how much the loose magnifier grows when it finds something
+  // Makemova / Feedback pin / Versa (11125:65033): Smart animate 420 ms to open, 280 ms to close after a 120 ms leave delay.
+  pinOpen: 420,
+  pinClose: 280,
+  pinLeaveDelay: 120,
+  pinIdle: 1800, // Versa bobs and tips while it waits on the screen
+  pinIdleRise: 2,
+  pinIdleTip: 4, // degrees
+  pinIdleStagger: 260,
+  pinHop: 5,
   glintAngle: 24,
   glintOpacity: 0.85,
   hiEvery: 4600, // hero Mate says hi again
@@ -765,3 +799,26 @@ export const shadow = {
 
 export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity, blur, motion, crewLayers, artiGlass, artiShine, puzzleLetters, play };
 export default tokens;
+
+/**
+ * Makemova / Feedback pin / Versa (11125:65033), px from the 32 × 32 pin frame.
+ * Closed: the Versa · Compare sticker with a number badge on its body. Open: a pink shell grows from behind
+ * Versa's head into the feedback card (Smart animate), joined to it by the neck.
+ */
+export const feedbackPinArt = {
+  sticker: [0, 0, 40.5, 49.2], // Character / Versa sticker frame
+  art: [-7, -2.1, 51.4, 51.6], // sticker-versa.png drawn so its die-cut edge lands on the Figma art (-5.4, -0.2, 47.4 × 50.8)
+  badge: [8, 24, 16, 14],
+  neck: [9, 28, 14, 24],
+  shellClosed: [-6, -8, 44, 44],
+  shellRight: [-6, 44, 304, 156],
+  shellLeft: [-266, 44, 304, 156],
+  bellyRight: [2, 52, 288, 140],
+  bellyLeft: [-258, 52, 288, 140],
+  shellRadius: 20,
+  neckRadius: 7,
+  badgeRadius: 7,
+  bellyRadius: 12,
+  bellyPadding: 16,
+  bellyGap: 8, // Source → title → body
+} as const;

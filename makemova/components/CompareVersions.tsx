@@ -1,72 +1,86 @@
-import { Image, type ImageSource } from 'expo-image';
-import { useState } from 'react';
+import type { ImageSource } from 'expo-image';
 import { Pressable, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
-import { ChooseVersion, type VersionOption } from '@/components/ChooseVersion';
+import { Icon } from '@/components/Icon';
+import { VersionPreview } from '@/components/VersionPreview';
 import { size } from '@/tokens';
 
-export type CompareVersion = VersionOption & { source: ImageSource | number | null };
+export type CompareVersion = { number: number; name: string; file: string; source: ImageSource | number | null };
 
 type Props = {
   versions: CompareVersion[];
-  initialA: number;
-  initialB: number;
+  /** Left: the current version. */
+  a: number;
+  /** Right: the version it is compared with, or null for the empty "Add a version" slot. */
+  b: number | null;
+  /** Change on either side, or the empty slot: opens Own project · Add a version. */
+  onChange: (side: 'A' | 'B') => void;
   onUse: (number: number) => void;
   onExit: () => void;
 };
 
-/** Secondary S drawn at the comparison's 560 / 644 scale ("Action · Change", "Action · Use v1"). */
-function CompareAction({ label, full, onPress }: { label: string; full?: boolean; onPress: () => void }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      onHoverIn={() => setHover(true)}
-      onHoverOut={() => setHover(false)}
-      className={`items-center justify-center rounded-pill border-secondaryText ${hover ? 'bg-paper' : 'bg-white'} ${
-        full ? 'self-stretch' : 'w-compareChange'
-      }`}
-      style={{ height: size.compareControl, borderWidth: size.compareStroke, paddingHorizontal: size.comparePad }}
-    >
-      <Text className="font-semibold text-compareLabel text-ink">{label}</Text>
-    </Pressable>
-  );
-}
-
 /**
- * Figma: Compare versions · Selection only (11125:41951), shown when Compare is pressed in Tools.
- * Prototype: Change → R5 · Choose A / B; Use vN → Explain your choice; Exit comparison → back to Make with tools open.
+ * Figma: R11 · Compare and explain (11125:44606) and Compare versions · Selection only (11125:41951).
+ * Left is the current version; right starts as a dashed "Add a version" slot.
+ * Prototype: the slot, "Add a version" and Change → Own project · Add a version (saved version or new screenshot);
+ * once both sides hold a version (Pair ready), Use vN → Explain your choice; Exit comparison → Make with tools open.
+ * Each screen is drawn whole at its own proportions, so a tall phone UI is never cropped.
  */
-export function CompareVersions({ versions, initialA, initialB, onUse, onExit }: Props) {
-  const [a, setA] = useState(initialA);
-  const [b, setB] = useState(initialB);
-  const [choosing, setChoosing] = useState<'A' | 'B' | null>(null);
+export function CompareVersions({ versions, a, b, onChange, onUse, onExit }: Props) {
+  const ready = b !== null;
 
-  const column = (side: 'A' | 'B', n: number) => {
-    const v = versions.find((x) => x.number === n);
+  const column = (side: 'A' | 'B', n: number | null) => {
+    const v = n === null ? null : versions.find((x) => x.number === n);
+    if (!v) {
+      return (
+        <View className="w-compareColumn gap-12">
+          <View className="h-control flex-row items-center">
+            <Text className="flex-1 font-medium text-labelUi text-ink">{side} · Add a version</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add a version. Choose a saved version or add a screenshot."
+            onPress={() => onChange(side)}
+            className="flex-1 items-center justify-center gap-8 rounded-14 border-dash border-dashed border-secondaryText bg-white hover:bg-paper"
+            style={{ minHeight: size.compareSlotHeight }}
+          >
+            <View className="h-addVersionMark w-addVersionMark items-center justify-center rounded-pill bg-paper">
+              <Text className="font-regular text-sectionUi text-ink">+</Text>
+            </View>
+            <Text className="font-semibold text-labelUi text-ink">Add a version</Text>
+            <Text className="font-regular text-bodySmall text-secondaryText">Choose a saved version or add a screenshot.</Text>
+          </Pressable>
+        </View>
+      );
+    }
     return (
-      <View className="w-compareColumn" style={{ gap: size.compareGap }}>
-        <View className="flex-row items-center" style={{ gap: size.compareGap }}>
-          <Text className="flex-1 font-medium text-compareLabel text-ink">
-            {side} · v{n}
+      <View className="w-compareColumn gap-12">
+        <View className="h-control flex-row items-center gap-12">
+          <Text numberOfLines={1} className="flex-1 font-medium text-labelUi text-ink">
+            {side} · {v.name}
           </Text>
-          <CompareAction label="Change" onPress={() => setChoosing(side)} />
+          <Button label="Change" variant="secondary" size="sm" onPress={() => onChange(side)} />
         </View>
         <View
-          className="h-compareFrameHeight rounded-compareFrame bg-paper"
-          style={{ padding: size.comparePad }}
+          className="flex-1 items-center justify-center rounded-14 bg-white p-14"
+          style={{ minHeight: size.compareSlotHeight }}
         >
-          {v?.source ? (
-            <Image source={v.source} style={{ width: size.compareShot, height: size.compareShotHeight }} contentFit="cover" />
+          {v.source ? (
+            <VersionPreview
+              source={v.source}
+              label={v.name}
+              maxWidth={size.compareShot}
+              maxHeight={size.portraitMaxHeight}
+            />
           ) : (
-            <View className="flex-1 items-center justify-center">
-              <Text className="font-regular text-bodySmall text-secondaryText">Add another screenshot to compare.</Text>
+            <View className="items-center gap-8">
+              <Icon name="image" size={size.icon} />
+              <Text className="font-regular text-bodySmall text-secondaryText">This screen could not load.</Text>
             </View>
           )}
         </View>
-        {v && <CompareAction label={`Use v${n}`} full onPress={() => onUse(n)} />}
+        {ready && <Button label={`Use v${v.number}`} variant="secondary" size="sm" full onPress={() => onUse(v.number)} />}
       </View>
     );
   };
@@ -74,25 +88,16 @@ export function CompareVersions({ versions, initialA, initialB, onUse, onExit }:
   return (
     <View className="w-compareMode gap-16">
       <View className="flex-row items-center gap-12">
-        <Text className="flex-1 font-semibold text-cardTitle text-ink">Compare versions.</Text>
-        <Button label="Exit comparison" variant="secondary" size="sm" width={size.compareExit} onPress={onExit} />
+        <Text className="flex-1 font-semibold text-sectionUi text-ink">Compare versions.</Text>
+        <Button label="Exit comparison" variant="secondary" size="header" width={size.compareExit} onPress={onExit} />
       </View>
-      <View className="flex-row gap-24">
+      <View className="flex-row items-stretch gap-24">
         {column('A', a)}
         {column('B', b)}
       </View>
-      <Text className="font-regular text-bodySmall text-secondaryText">Pick a version to revise.</Text>
-
-      <ChooseVersion
-        side={choosing}
-        options={versions}
-        onChoose={(n) => {
-          if (choosing === 'A') setA(n);
-          else setB(n);
-          setChoosing(null);
-        }}
-        onClose={() => setChoosing(null)}
-      />
+      <Text className="font-regular text-bodySmall text-secondaryText">
+        {ready ? 'Pick a version to revise.' : 'Add another version to compare.'}
+      </Text>
     </View>
   );
 }
