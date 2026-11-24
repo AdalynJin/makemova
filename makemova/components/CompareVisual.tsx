@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, Text, View } from 'react-native';
 
 import { CrewFigure } from '@/components/CrewFigure';
@@ -29,17 +29,22 @@ export function CompareVisual() {
   // Versa pulls the line: arm and body follow it, and Versa waves once v3 is chosen.
   const aim = useRef(new Animated.Value(0)).current;
   const lean = useRef(new Animated.Value(0)).current;
+  const step = useRef(new Animated.Value(0)).current;
+  const last = useRef({ at: WIDTH / 2, time: 0 });
   const chosen = useRef(false);
   const [cheer, setCheer] = useState(0);
   const [idle, setIdle] = useState(0);
-  const glide = useGlide([0, 0, 0, 0], ([lookX, lookY, arm, body]) => {
+  const glide = useGlide([0, 0, 0, 0, 0], ([lookX, lookY, arm, body, side]) => {
     look.setValue({ x: lookX, y: lookY });
     aim.setValue(arm);
     lean.setValue(body);
+    step.setValue(side);
   });
+  const settle = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(settle.current), []);
   const frame = useRef<unknown>(null);
   const inView = useInView(frame);
-  useEvery(play.idleEvery, () => setIdle((n) => n + 1), inView && !reduced, play.firstTurn);
+  useEvery(play.actEvery, () => setIdle((n) => n + 1), inView && !reduced, play.firstTurn);
   const place = (next: number, slow = false) => {
     const to = clamp(next);
     at.current = to;
@@ -50,7 +55,17 @@ export function CompareVisual() {
     const picked = part * 100 <= play.pickedAt;
     if (picked && !chosen.current) setCheer((n) => n + 1);
     chosen.current = picked;
-    if (!reduced) glide.to([gaze.x, gaze.y, between(play.pull), between(play.lean)]);
+    if (!reduced) {
+      // A quick drag tugs Versa along; the lean settles once the line stops.
+      const time = performance.now();
+      const speed = ((to - last.current.at) / Math.max(1, time - last.current.time)) * 1000;
+      last.current = { at: to, time };
+      const tug = slow ? 0 : Math.max(-play.tugMost, Math.min(play.tugMost, speed * play.tug));
+      const pose = [gaze.x, gaze.y, between(play.pull), between(play.lean), between(play.step)];
+      glide.to(pose.map((v, i) => (i === 3 ? v + tug : v)));
+      clearTimeout(settle.current);
+      settle.current = setTimeout(() => glide.to(pose), play.look);
+    }
     if (slow && !reduced) Animated.timing(x, { toValue: to, duration: play.slide, easing: easeOut, useNativeDriver: false }).start();
     else x.setValue(to);
   };
@@ -193,16 +208,21 @@ export function CompareVisual() {
           Make the main button stand out and keep the second one quieter.
         </Text>
       </View>
-      <CrewFigure
-        crew="versa"
-        width={size.compareVersa}
-        look={look}
-        aim={aim}
-        lean={lean}
-        turn={cheer + idle}
-        hop={cheer}
-        style={{ position: 'absolute', left: size.compareVersaLeft, top: size.compareVersaTop }}
-      />
+      <Animated.View
+        pointerEvents="none"
+        style={{ position: 'absolute', left: size.compareVersaLeft, top: size.compareVersaTop, transform: [{ translateX: step }] }}
+      >
+        <CrewFigure
+          crew="versa"
+          width={size.compareVersa}
+          look={look}
+          aim={aim}
+          lean={lean}
+          turn={cheer + idle}
+          hop={cheer}
+          gain={play.versaGain}
+        />
+      </Animated.View>
     </View>
   );
 }

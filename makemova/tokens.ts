@@ -134,6 +134,8 @@ export const textStyle = {
   toolIntro: { size: 12.071, lineHeight: 16.714, letterSpacing: 0 },
   toolMeta: { size: 11.143, lineHeight: 14.857, letterSpacing: 0 },
   // MOVA · Hover preview (11125:42023)
+  bringTitle: { size: 24, lineHeight: 28.32, letterSpacing: -0.48 }, // Visual · Bring your work
+  bringLabel: { size: 11, lineHeight: 14, letterSpacing: 1.1 },
   previewName: { size: 22, lineHeight: 29, letterSpacing: 0 },
   previewIntro: { size: 14, lineHeight: 18, letterSpacing: 0 },
   // R5 · Tutorials category (11125:60129)
@@ -399,7 +401,27 @@ export const size = {
   visualBringHeight: 431,
   visualAskHeight: 462,
   visualCompareHeight: 659,
-  visualBringArtTop: -120.7, // characters rise above the visual frame
+  // Visual · Bring your work (11125:38872)
+  bringCard: 380,
+  bringCardHeight: 234,
+  bringTitle: 320,
+  bringBody: 330,
+  bringTagStudents: 100,
+  bringTagPickup: 113,
+  bringTagRush: 102,
+  bringArch: 7,
+  bringTriangle: 12.04,
+  bringShotLeft: 452,
+  bringShot: 268,
+  bringShotHeight: 170.85,
+  bringFileTop: 258.85,
+  bringFile: 169,
+  bringGoalTop: 302.85,
+  bringGoal: 208,
+  bringCaptionTop: 373,
+  bringMate: 145.1,
+  bringMateLeft: 257.45,
+  bringMateTop: -42,
   // Visual · Ask about one decision (11125:38958)
   askCard: 448,
   askCardHeight: 295.8,
@@ -679,6 +701,9 @@ export const artiGlass = { centre: [159.49, 111.24], radius: 17.48, box: 82, ins
 /** Where light can catch: the inside of the magnifier and of the monocle, and the hand the magnifier grows from. */
 export const artiShine = { lens: [159.49, 111.24, 15.5], eye: [97.47, 119.94, 11.1], grip: [198.34, 150.09] } as const;
 
+/** The fold of Opus's book, in Opus's SVG units. */
+export const opusSpine = [109.02, 150.3] as const;
+
 /** The four letters in the mova puzzle: width and scattered position (left, top, degrees) at 1312 wide. */
 export const puzzleLetters = {
   m: { width: 174.45, left: 405.5, loose: [60, 40, -12] },
@@ -721,8 +746,14 @@ export const play = {
   aimHero: 9, // degrees Mate's raised arm leans toward the pointer
   aimReach: 520, // px from Mate at which the arm is at its furthest
   aimArti: 12,
-  pull: [-24, 8], // Versa's raised arm, degrees, with the handle at v3 and at v2
-  lean: [-5, 5], // Versa's body, same ends
+  pull: [-34, 14], // Versa's raised arm, degrees, with the handle at v3 and at v2
+  lean: [-6.5, 6], // Versa's body, same ends
+  step: [-3, 4], // px Versa steps, same ends
+  tug: 0.012, // degrees Versa leans per px a second of the line
+  tugMost: 3.5,
+  versaGain: 1.5, // Versa beside the comparison acts bigger than in the helpers
+  opusGain: 1.5, // Opus on the versions card
+  opusLean: 5, // degrees toward the pointer
   pickedAt: 3, // percent: dragged this close to v3 counts as choosing it
   crewHop: { ms: 620, at: [0, 0.14, 0.45, 0.76, 0.88, 1], y: [0, 0, -0.09, 0, 0, 0], squash: [1, 0.95, 1.03, 0.95, 1.01, 1] }, // y as a share of the height
   // Keyframes: position 0–1, then the value
@@ -733,7 +764,8 @@ export const play = {
   act: {
     mate: { ms: 2200, arm: 15, swings: 3, lean: 1.5 }, // waves hi
     versa: { ms: 3400, arm: 12, lean: 5, eyes: 4 }, // weighs one side, then the other, then picks
-    opus: { ms: 3600, lean: 4, eyesX: 4, eyesDown: 3, eyesUp: 3 }, // reads two lines, then "aha"
+    opus: { ms: 4000, lean: 4, sway: 2.2, rise: 0.03, eyesX: 4, eyesDown: 3, eyesUp: 3 }, // reads a line, turns the page, reads on, then "aha"
+    brief: { ms: 3600, lean: 3.5, arm: 46, eyesX: 4, eyesDown: 4, dip: 0.03 }, // Mate reads the brief, then shows the screen
     arti: { ms: 3000, arm: 7, lean: 2, swell: 0.32 }, // the magnifier grows, then the glass catches the light
   },
   seesaw: 3.5, // degrees Versa's ink shape tips while comparing
@@ -747,9 +779,11 @@ export const play = {
   pinIdleTip: 4, // degrees
   pinIdleStagger: 260,
   pinHop: 5,
+  pageTilt: 14, // degrees Opus's page lifts while turning
   glintAngle: 24,
   glintOpacity: 0.85,
   hiEvery: 4600, // hero Mate says hi again
+  actEvery: 5200, // Mate on the brief, Versa and Opus
   idleEvery: 6500, // one quiet act when the section is on screen
   turnEvery: 4200, // the four helpers act one after another
   firstTurn: 900,
@@ -759,6 +793,7 @@ export const play = {
   strollReach: 56, // px they come toward the pointer
   strollPull: 0.14,
   strollIdle: 34,
+  bring: { start: -195, pace: -120, most: 6, near: 24, rest: 24, point: 46, lean: 6, tilt: 3, follow: 0.05, glide: 2.6 }, // Mate on the brief card: px along it, then degrees
   stride: 26, // px per step
   stepTilt: 3.2, // degrees
   stepLift: 4, // px
@@ -797,7 +832,7 @@ export const shadow = {
   sticker: { offsetY: 2, blur: 3, opacity: 0.14 }, // crew sticker
 } as const;
 
-export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity, blur, motion, crewLayers, artiGlass, artiShine, puzzleLetters, play };
+export const tokens = { color, role, fontFamily, type, textStyle, space, radius, size, border, shadow, crewArt, opacity, blur, motion, crewLayers, artiGlass, artiShine, opusSpine, puzzleLetters, play };
 export default tokens;
 
 /**

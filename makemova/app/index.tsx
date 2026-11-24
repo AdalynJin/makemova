@@ -4,17 +4,18 @@ import { useRef, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { AskVisual } from '@/components/AskVisual';
+import { BringVisual } from '@/components/BringVisual';
 import { Button } from '@/components/Button';
 import { CompareVisual } from '@/components/CompareVisual';
 import { type CrewCardProps } from '@/components/CrewCard';
 import { CrewHelpers } from '@/components/CrewHelpers';
 import { CrewLineUp } from '@/components/CrewLineUp';
 import { CrewMosaic } from '@/components/CrewMosaic';
-import { OpusReads } from '@/components/OpusReads';
 import { PublicNav } from '@/components/PublicNav';
 import { HeroMate } from '@/components/HeroMate';
 import { HeroTitle } from '@/components/HeroTitle';
 import { MovaPuzzle } from '@/components/MovaPuzzle';
+import { VersionsCard } from '@/components/VersionsCard';
 import { useAuth } from '@/lib/auth';
 import { asset } from '@/lib/ui';
 import { opacity, radius, size, space } from '@/tokens';
@@ -143,7 +144,7 @@ function ValueStrip() {
   );
 }
 
-/** Figma: How it works steps. Visual 1 is exported with its characters; 2 and 3 are built so they can respond. */
+/** Figma: How it works steps. */
 const steps: { badge: number; title: string; body: string; sub: string; subBody: string; visual: ReactNode }[] = [
   {
     badge: asset.step1,
@@ -151,22 +152,7 @@ const steps: { badge: number; title: string; body: string; sub: string; subBody:
     body: 'Start the café brief or bring your own screen.',
     sub: 'Know your next step',
     subBody: 'A brief, a stage goal, and one practical task.',
-    visual: (
-      <View className="w-visualWidth" style={{ height: size.visualBringHeight }}>
-        <Image
-          source={asset.visualBring}
-          accessibilityLabel="The café brief beside the café screen, with Mate on the brief card"
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: size.visualBringArtTop,
-            width: size.visualWidth,
-            height: size.visualBringHeight - size.visualBringArtTop,
-          }}
-          contentFit="fill"
-        />
-      </View>
-    ),
+    visual: <BringVisual />,
   },
   {
     badge: asset.step2,
@@ -236,16 +222,7 @@ function ExampleProject({ onExample }: { onExample: () => void }) {
           <Button label="Try the example project" variant="outline" size="hero" arrow onPress={onExample} />
         </View>
       </View>
-      {/* Figma: Versions preview (11125:39124), Opus reading on its top edge. */}
-      <View className="w-versionsPreview h-versionsPreviewHeight overflow-visible rounded-28 bg-white">
-        <Image
-          source={asset.versionsPreview}
-          accessibilityLabel="Versions v1, v2 and v3, with v3 saved revision open"
-          style={{ width: size.versionsPreview, height: size.versionsPreviewHeight, borderRadius: radius[28] }}
-          contentFit="fill"
-        />
-        <OpusReads />
-      </View>
+      <VersionsCard />
     </View>
   );
 }

@@ -43,7 +43,8 @@ export const stickerShadow = {
 export const asset = {
   logoMark: require('@/assets/figma/logo-mark.svg'),
   heroPreview: require('@/assets/figma/home/workspace-preview.png'),
-  visualBring: require('@/assets/figma/home/visual-bring-your-work.png'),
+  tagArch: require('@/assets/figma/home/tag-arch.svg'),
+  tagTriangle: require('@/assets/figma/home/tag-triangle.svg'),
   versionsPreview: require('@/assets/figma/home/versions-preview.png'),
   step1: require('@/assets/figma/home/step-1.svg'),
   step2: require('@/assets/figma/home/step-2.svg'),
@@ -84,6 +85,7 @@ export const asset = {
     opus: {
       back: require('@/assets/figma/crew-layers/opus-back.svg'),
       body: require('@/assets/figma/crew-layers/opus-body.svg'),
+      page: require('@/assets/figma/crew-layers/opus-page.svg'),
       eyes: require('@/assets/figma/crew-layers/opus-eyes.svg'),
     },
     arti: {

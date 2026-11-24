@@ -5,7 +5,7 @@ import { play } from '@/tokens';
 type Curve = (t: number) => number;
 
 /** What one character does, as smooth curves over 0–1. */
-type Act = { ms: number } & Partial<Record<'arm' | 'lean' | 'eyeX' | 'eyeY' | 'glass' | 'lensGlint' | 'eyeGlint' | 'shape', Curve>>;
+type Act = { ms: number } & Partial<Record<'arm' | 'lean' | 'eyeX' | 'eyeY' | 'glass' | 'lensGlint' | 'eyeGlint' | 'shape' | 'stretch' | 'page', Curve>>;
 
 const ramp = (t: number, from: number, to: number) => {
   const k = Math.max(0, Math.min(1, (t - from) / (to - from)));
@@ -15,15 +15,25 @@ const ramp = (t: number, from: number, to: number) => {
 const pulse = (t: number, a: number, b: number, c: number, d: number) => ramp(t, a, b) * (1 - ramp(t, c, d));
 const swing = (t: number, times: number) => Math.sin(2 * Math.PI * times * t) * Math.sin(Math.PI * t);
 
-const { mate, versa, opus, arti } = play.act;
+const { mate, brief, versa, opus, arti } = play.act;
 const sides = (t: number) => pulse(t, 0.02, 0.18, 0.34, 0.52) - pulse(t, 0.34, 0.52, 0.66, 0.84);
 const line = (t: number) => -1 + 2 * ramp(t, 0, 1);
+const reading = (t: number) =>
+  line((t - 0.08) / 0.24) * pulse(t, 0, 0.08, 0.3, 0.4) + line((t - 0.48) / 0.18) * pulse(t, 0.4, 0.48, 0.64, 0.72);
 
 export const acts: Record<keyof typeof play.act, Act> = {
   mate: {
     ms: mate.ms,
     arm: (t) => -mate.arm * swing(t, mate.swings),
     lean: (t) => -mate.lean * pulse(t, 0, 0.25, 0.7, 1),
+  },
+  brief: {
+    ms: brief.ms,
+    eyeX: (t) => brief.eyesX * (line((t - 0.08) / 0.3) * pulse(t, 0, 0.08, 0.36, 0.46) + pulse(t, 0.44, 0.56, 0.86, 1)),
+    eyeY: (t) => brief.eyesDown * pulse(t, 0, 0.1, 0.86, 1),
+    lean: (t) => brief.lean * (pulse(t, 0.44, 0.6, 0.84, 1) - pulse(t, 0, 0.14, 0.36, 0.52)),
+    arm: (t) => brief.arm * pulse(t, 0.44, 0.6, 0.84, 1),
+    stretch: (t) => -brief.dip * pulse(t, 0.02, 0.14, 0.36, 0.5),
   },
   versa: {
     ms: versa.ms,
@@ -34,11 +44,11 @@ export const acts: Record<keyof typeof play.act, Act> = {
   },
   opus: {
     ms: opus.ms,
-    eyeX: (t) =>
-      opus.eyesX *
-      (line((t - 0.1) / 0.22) * pulse(t, 0, 0.1, 0.3, 0.4) + line((t - 0.4) / 0.22) * pulse(t, 0.32, 0.42, 0.6, 0.7)),
-    eyeY: (t) => opus.eyesDown * pulse(t, 0, 0.1, 0.6, 0.72) - opus.eyesUp * pulse(t, 0.66, 0.78, 0.88, 1),
-    lean: (t) => opus.lean * pulse(t, 0.64, 0.78, 0.86, 1),
+    eyeX: (t) => opus.eyesX * reading(t),
+    eyeY: (t) => opus.eyesDown * pulse(t, 0, 0.1, 0.64, 0.74) - opus.eyesUp * pulse(t, 0.7, 0.8, 0.9, 1),
+    lean: (t) => opus.sway * reading(t) + opus.lean * pulse(t, 0.7, 0.8, 0.88, 1),
+    stretch: (t) => opus.rise * pulse(t, 0.7, 0.8, 0.86, 1),
+    page: (t) => ramp(t, 0.33, 0.52),
   },
   arti: {
     ms: arti.ms,
