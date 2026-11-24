@@ -4,11 +4,11 @@ import { Animated, Text, View } from 'react-native';
 import { easeOut, useReducedMotion } from '@/lib/motion';
 import { play, size, space } from '@/tokens';
 
-const LINES = [['Learn', 'design'], ['by', 'making'], ['decisions.']];
+const LINES = [['Learn', 'design'], ['by', 'making'], ['decisions']];
 const WORDS = LINES.flat();
 
 /**
- * Figma: Homepage v3 hero title. The words rise one by one, then the yellow highlight draws under "decisions."
+ * Figma: Homepage v3 hero title. The words rise one by one, then the yellow highlight draws under "decisions"
  * Plays once. Read as one heading. With "reduce motion" on, it is simply there.
  */
 export function HeroTitle() {
@@ -46,7 +46,7 @@ export function HeroTitle() {
   };
 
   return (
-    <View accessible accessibilityRole="header" accessibilityLabel="Learn design by making decisions.">
+    <View accessible accessibilityRole="header" accessibilityLabel="Learn design by making decisions">
       <View aria-hidden importantForAccessibility="no-hide-descendants">
         {LINES.map((line, l) => (
           <View key={line[0]} className="flex-row self-start">

@@ -59,10 +59,6 @@ export default function Home() {
   );
 }
 
-function Eyebrow({ children, light }: { children: string; light?: boolean }) {
-  return <Text className={`font-bold text-eyebrow ${light ? 'text-onDarkMuted' : 'text-ink'}`}>{children}</Text>;
-}
-
 function Hero({ onStart, onExample }: { onStart: () => void; onExample: () => void }) {
   return (
     <View className="overflow-hidden bg-paper" style={{ height: size.heroHeight }}>
@@ -98,7 +94,7 @@ function Hero({ onStart, onExample }: { onStart: () => void; onExample: () => vo
       <HeroMate />
       {/* Figma: Homepage v3 hero copy column. Each block sits at its Figma y, less the 81 nav. */}
       <View style={{ position: 'absolute', left: space[64], top: size.heroEyebrowTop }}>
-        <Eyebrow>GUIDED DESIGN PRACTICE</Eyebrow>
+        <Text className="font-bold text-eyebrow text-ink">GUIDED DESIGN PRACTICE</Text>
       </View>
       <View className="w-heroText" style={{ position: 'absolute', left: space[64], top: size.heroTitleTop }}>
         <HeroTitle />
@@ -131,7 +127,7 @@ const values = [
 function ValueStrip() {
   return (
     <View className="justify-center gap-36 bg-white px-64" style={{ height: size.valueStripHeight }}>
-      <Text className="font-bold text-headline text-ink">One project. Four stages.{'\n'}Help only where you need it.</Text>
+      <Text className="font-bold text-headline text-ink">Get help only{'\n'}where you need it</Text>
       <View className="flex-row gap-32">
         {values.map((v) => (
           <View key={v.title} className="w-valueColumn gap-8 border-t border-border pt-32">
@@ -175,10 +171,7 @@ const steps: { badge: number; title: string; body: string; sub: string; subBody:
 function HowItWorks() {
   return (
     <View className="gap-80 bg-paper px-64 pb-120 pt-80">
-      <View className="gap-20">
-        <Eyebrow>HOW IT WORKS</Eyebrow>
-        <Text className="font-bold text-section text-ink">Three steps from brief to reflection.</Text>
-      </View>
+      <Text className="font-bold text-section text-ink">How a project works</Text>
       <View className="gap-120">
         {steps.map((s, i) => (
           <View key={s.title} className={`items-center justify-between ${i % 2 ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -202,23 +195,13 @@ function HowItWorks() {
 /** Figma: Example project (11125:39110) */
 function ExampleProject({ onExample }: { onExample: () => void }) {
   return (
-    <View className="flex-row items-center justify-between bg-paper px-64 py-110">
-      <View className="w-column gap-24">
-        <Eyebrow>EXAMPLE PROJECT</Eyebrow>
-        <Text className="font-bold text-section text-ink">See it on a{'\n'}real project.</Text>
+    <View className="flex-row items-start justify-between bg-paper px-64 py-110">
+      <View className="w-exampleText gap-24">
+        <Text className="font-bold text-section text-ink">Look inside the{'\n'}café project</Text>
         <Text className="font-regular text-leadSmall text-secondaryText">
           Bring one screen and a goal. Every version stays saved.
         </Text>
-        <View className="gap-26 pt-64">
-          {['Your screen and goal stay side by side', 'Feedback is pinned to what is visible', 'v1, v2 and v3 stay saved to compare'].map(
-            (b) => (
-              <Text key={b} className="font-medium text-bodyLarge text-ink">
-                {b}
-              </Text>
-            ),
-          )}
-        </View>
-        <View className="self-start pt-28">
+        <View className="self-start pt-16">
           <Button label="Try the example project" variant="outline" size="hero" arrow onPress={onExample} />
         </View>
       </View>
@@ -238,10 +221,7 @@ const crew: CrewCardProps[] = [
 function CrewSection() {
   return (
     <View className="gap-56 bg-paper px-64 pb-64 pt-100">
-      <View className="gap-20">
-        <Eyebrow>THE CREW</Eyebrow>
-        <Text className="font-bold text-section text-ink">Meet your{'\n'}four helpers.</Text>
-      </View>
+      <Text className="font-bold text-section text-ink">Meet your{'\n'}four helpers</Text>
       <CrewHelpers crew={crew} />
       <MovaPuzzle />
     </View>
@@ -259,8 +239,7 @@ function Tools() {
   return (
     <View className="flex-row justify-between bg-white px-64 py-100">
       <View className="w-column gap-20">
-        <Eyebrow>TOOLS</Eyebrow>
-        <Text className="font-bold text-headline text-ink">Three tools,{'\n'}priced up front.</Text>
+        <Text className="font-bold text-headline text-ink">What each{'\n'}tool costs</Text>
         <Text className="w-stepBody font-regular text-leadSmall text-secondaryText">
           You always see the cost before you run something new.
         </Text>
@@ -318,8 +297,7 @@ function Plans({ onPlan }: { onPlan: (name: string) => void }) {
   return (
     <View className="gap-40 bg-ink px-64 pb-80 pt-100">
       <View className="gap-20">
-        <Eyebrow light>PLANS & AI CREDITS</Eyebrow>
-        <Text className="font-bold text-section text-white">Start free.{'\n'}Add AI help when you need it.</Text>
+        <Text className="font-bold text-section text-white">Start free, add AI help{'\n'}when you need it</Text>
         <Text className="font-regular text-leadSmall text-onDarkMuted">
           Credits are only used for new AI requests. You see the price first.
         </Text>
@@ -375,20 +353,17 @@ function Plans({ onPlan }: { onPlan: (name: string) => void }) {
 }
 
 const faqs = [
-  ['Do I need my own project?', 'No. Start with the café project — no setup needed. You can bring your own screen any time.'],
+  ['Do I need my own project?', 'No. You can start with the café project and bring your own screen any time.'],
   ['What uses credits?', 'Only new AI requests. You see the price first; manual work is free.'],
   ['Will the AI redesign my work?', 'No. It gives feedback. You make the changes.'],
-  ['What do I keep at the end?', 'Every version — v1, v2 and v3 — the reason you chose one, and one useful lesson for next time.'],
+  ['What do I keep at the end?', 'Every version you made, why you chose one, and a lesson for next time.'],
 ];
 
 /** Figma: FAQ (11125:39526 – 39540) */
 function Faq() {
   return (
     <View className="flex-row justify-between bg-paper px-64 pt-100">
-      <View className="w-column gap-20">
-        <Eyebrow>FAQ</Eyebrow>
-        <Text className="font-bold text-headline text-ink">Questions,{'\n'}answered.</Text>
-      </View>
+      <Text className="w-column font-bold text-headline text-ink">Common{'\n'}questions</Text>
       <View className="w-visual border-b border-border">
         {faqs.map(([q, a]) => (
           <View key={q} className="gap-8 border-t border-border pb-28 pt-26">
@@ -404,8 +379,7 @@ function Faq() {
 function Cta({ onStart, onExample }: { onStart: () => void; onExample: () => void }) {
   return (
     <View className="items-center gap-24 bg-paper px-64 pt-60">
-      <Eyebrow>CREATE YOUR ACCOUNT</Eyebrow>
-      <Text className="text-center font-bold text-cta text-ink">Start with the café project.{'\n'}No setup needed.</Text>
+      <Text className="text-center font-bold text-cta text-ink">Try the café project first</Text>
       <Text className="font-regular text-howBody text-secondaryText">Keep your projects and versions in one place.</Text>
       <View className="flex-row gap-12 pt-12">
         <Button label="Create free account" size="hero" arrow onPress={onStart} />

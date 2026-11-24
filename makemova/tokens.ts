@@ -475,6 +475,7 @@ export const size = {
   puzzleLetterHeight: 112.55,
   puzzleSnap: 70,
   versionsPreview: 676,
+  exampleText: 560, // Example project (11125:39110)
   versionsPreviewHeight: 500,
   examplePreviewOpus: 84.3, // Example project · Opus
   examplePreviewOpusLeft: 558, // from the versions card's left edge
