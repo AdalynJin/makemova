@@ -12,10 +12,12 @@ type Props = {
   /** home: 81 tall, 15px links with Plans. account: 64 tall, used on sign in and create account. */
   variant?: 'home' | 'account';
   onSection?: (id: 'how' | 'example' | 'plans') => void;
+  /** On the homepage: the logo goes back to the top. */
+  onHome?: () => void;
 };
 
 /** Figma: R4/Nav · Public */
-export function PublicNav({ variant = 'account', onSection }: Props) {
+export function PublicNav({ variant = 'account', onSection, onHome }: Props) {
   const { session } = useAuth();
   const home = variant === 'home';
   const [guide, setGuide] = useState(false);
@@ -28,7 +30,7 @@ export function PublicNav({ variant = 'account', onSection }: Props) {
       }`}
     >
       <View className={`flex-row items-center ${home ? 'gap-56' : 'gap-20'}`}>
-        <Logo home={home} />
+        <Logo home={home} onHome={onHome} />
         <View className={`flex-row items-center ${home ? 'gap-36' : 'gap-18'}`}>
           <Pressable accessibilityRole="link" onPress={() => go('how')}>
             <Text className={link}>How it works</Text>

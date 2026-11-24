@@ -32,7 +32,7 @@ export function AppNav({ variant = 'projects', balance = credits.remaining }: Pr
   return (
     <View className="h-navHeight flex-row items-center justify-between border-b border-border bg-white px-64">
       <View className="flex-row items-center gap-20">
-        <Logo href="/projects" />
+        <Logo />
         <Pressable
           accessibilityRole="link"
           onPress={() => router.push('/projects')}

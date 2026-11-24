@@ -5,11 +5,26 @@ import { Pressable } from 'react-native';
 import { asset } from '@/lib/ui';
 import { size } from '@/tokens';
 
-/** Figma: Makemova / App icon / Nav (11675:32760). `home`: larger, on the homepage nav. */
-export function Logo({ href = '/', home }: { href?: '/' | '/projects'; home?: boolean }) {
+type Props = {
+  /** Larger, on the homepage nav. */
+  home?: boolean;
+  /** Already on the homepage: go back to its top instead of opening it again. */
+  onHome?: () => void;
+};
+
+/** Figma: Makemova / App icon / Nav (11675:32760). Always leads to the homepage. */
+export function Logo({ home, onHome }: Props) {
   const side = home ? size.logoHome : size.logo;
   return (
-    <Link href={href} asChild>
+    <Link
+      href="/"
+      asChild
+      onPress={(event) => {
+        if (!onHome) return;
+        event.preventDefault();
+        onHome();
+      }}
+    >
       <Pressable accessibilityRole="link" accessibilityLabel="Makemova home">
         <Image source={asset.logoMark} style={{ width: side, height: side }} contentFit="contain" />
       </Pressable>

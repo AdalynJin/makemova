@@ -36,7 +36,7 @@ export default function Home() {
 
   return (
     <View className="flex-1 bg-paper">
-      <PublicNav variant="home" onSection={jump} />
+      <PublicNav variant="home" onSection={jump} onHome={() => scroll.current?.scrollTo({ y: 0, animated: true })} />
       <ScrollView ref={scroll as never} className="flex-1">
         <Hero onStart={start} onExample={example} />
         <ValueStrip />
