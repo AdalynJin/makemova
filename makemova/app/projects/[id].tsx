@@ -18,7 +18,7 @@ import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { asset } from '@/lib/ui';
 import { WORK_UNAVAILABLE, checkWork, pickWorkFile, releaseWork, uploadErrorText, workPath, type Work } from '@/lib/work';
-import { color, size, space } from '@/tokens';
+import { color, size } from '@/tokens';
 
 /** Explain is a step inside Make: the stage nav still shows Make. */
 type Step = Stage | 'explain';
@@ -227,7 +227,7 @@ export default function ProjectWorkspace() {
 
   if (load.status !== 'ready') {
     return (
-      <View className="flex-1 bg-canvas">
+      <View className="flex-1 bg-paper">
         <AppNav variant="workspace" />
         <View className="flex-1 items-center justify-center gap-16">
           {load.status === 'loading' ? (
@@ -295,7 +295,7 @@ export default function ProjectWorkspace() {
       finish?: boolean;
     }
   > = {
-    brief: { label: 'Next: Make', to: 'make' },
+    brief: { label: 'Next: Make', to: 'make', arrow: true },
     make: { label: 'Next: Revise', to: 'explain', arrow: true },
     explain: {
       label: 'Next: Revise',
@@ -309,12 +309,12 @@ export default function ProjectWorkspace() {
   const n = next[step];
 
   return (
-    <View className="flex-1 bg-canvas">
+    <View className="flex-1 bg-paper">
       <AppNav variant="workspace" />
 
       {/* R8 · Compact workspace header */}
       <View
-        className="h-navHeight flex-row items-center justify-between border-b border-border bg-white px-64"
+        className="h-navHeight flex-row items-center justify-between border-b border-border bg-paper px-64"
         style={{ zIndex: 2 }}
       >
         <Text numberOfLines={1} className="w-column font-semibold text-cardTitle text-ink">
@@ -353,10 +353,7 @@ export default function ProjectWorkspace() {
       </View>
 
       <ScrollView className="flex-1" contentContainerClassName="p-24">
-        <View
-          className={`rounded-24 ${step === 'brief' ? 'bg-white' : ''}`}
-          style={{ minHeight: size.artworkHeight + space[48] }}
-        >
+        <View style={{ minHeight: step === 'reflect' ? size.reflectHeight : size.artworkHeight }}>
           {comparing ? (
             <View style={{ marginLeft: size.compareModeLeft }}>
               <CompareVersions
@@ -383,13 +380,7 @@ export default function ProjectWorkspace() {
                   {ws.example || shown?.uri ? (
                     <Image
                       source={ws.example ? cafe[version - 1] : { uri: shown?.uri ?? undefined }}
-                      style={{
-                        position: 'absolute',
-                        left: space[16],
-                        top: space[16],
-                        width: size.artworkImage,
-                        height: size.artworkImageHeight,
-                      }}
+                      style={{ width: size.artworkImage, height: size.artworkImageHeight }}
                       contentFit={ws.example ? 'cover' : 'contain'}
                     />
                   ) : (
@@ -405,7 +396,7 @@ export default function ProjectWorkspace() {
             style={{
               position: 'absolute',
               left: 0,
-              top: size.versionTop - (step === 'brief' ? 0 : size.versionRow / 2),
+              top: size.versionTop - ((count - 1) * size.versionRow) / 2,
             }}
           >
             {Array.from({ length: count }, (_, i) => i + 1).map((v) => {
@@ -425,9 +416,9 @@ export default function ProjectWorkspace() {
                     />
                   </View>
                   <View
-                    className={`h-versionLabelHeight w-versionLabel justify-center rounded-6 px-6 ${current ? 'bg-compare' : ''}`}
+                    className={`h-versionLabelHeight w-versionLabel justify-center rounded-6 px-6 ${current ? 'bg-softBlue' : ''}`}
                   >
-                    <Text className="font-regular text-labelUi text-ink">Version {v}</Text>
+                    <Text className={`font-regular text-labelUi ${current ? 'text-ink' : 'text-secondaryText'}`}>Version {v}</Text>
                   </View>
                 </Pressable>
               );
@@ -441,20 +432,29 @@ export default function ProjectWorkspace() {
               accessibilityLabel={panelOpen ? 'Collapse panel' : 'Expand panel'}
               onPress={() => setPanelOpen(!panelOpen)}
               className="h-collapse w-collapse items-center justify-center rounded-pill border border-border bg-white"
-              style={{ position: 'absolute', right: 0, top: 0 }}
+              style={[
+                { position: 'absolute' },
+                step === 'reflect'
+                  ? { left: size.artworkLeft + size.artwork - size.collapse, top: size.reflectPanelTop }
+                  : { right: 0, top: 0 },
+              ]}
             >
-              <Icon name={step === 'make' && panelOpen ? 'chevronDown' : 'arrowRight'} size={size.iconSmall} />
+              <Icon name={step === 'make' && panelOpen ? 'chevronDown' : 'arrowRight'} size={size.icon} />
             </Pressable>
           )}
 
           {panelOpen && !comparing && (
             <View
-              style={{
-                position: 'absolute',
-                right: 0,
-                top: size.panelTop,
-                width: step === 'make' ? size.panelMake : size.panel,
-              }}
+              style={[
+                { position: 'absolute' },
+                step === 'reflect'
+                  ? {
+                      left: size.artworkLeft + size.reflectPanelLeft,
+                      top: size.reflectPanelTop + size.reflectSurfaceTop,
+                      width: size.reflectPanel,
+                    }
+                  : { right: 0, top: size.panelTop, width: step === 'make' ? size.panelMake : size.panel },
+              ]}
             >
               {step === 'brief' && (
                 <BriefPanel
@@ -527,13 +527,7 @@ function EmptyArtwork() {
   return (
     <View
       className="items-center justify-center gap-8 rounded-24 border border-dashed border-secondaryText bg-white"
-      style={{
-        position: 'absolute',
-        left: space[16],
-        top: space[16],
-        width: size.artworkImage,
-        height: size.artworkImageHeight,
-      }}
+      style={{ width: size.artworkImage, height: size.artworkImageHeight }}
     >
       <Text className="font-semibold text-cardTitle text-ink">No screen yet</Text>
       <Text className="font-regular text-bodyUi text-secondaryText">Add one PNG or JPG in Make to get feedback.</Text>
@@ -545,30 +539,35 @@ function EmptyArtwork() {
 function ReflectCompare({ example }: { example: boolean }) {
   const card = (label: string, src: number) => (
     <View
-      className="gap-16 rounded-16 border border-border p-28"
+      className="gap-12 rounded-14 border border-border p-16"
       style={{ width: size.compareCard, height: size.compareCardHeight }}
     >
-      <Text className="font-medium text-bodySmall text-ink">{label}</Text>
-      {example ? (
-        <Image source={src} style={{ width: size.compareImage, height: size.compareImageHeight }} contentFit="cover" />
-      ) : (
-        <View className="flex-1 rounded-10 bg-chip" />
-      )}
+      <Text className="font-medium text-labelUi text-ink">{label}</Text>
+      <View
+        className="items-center justify-center rounded-10 bg-paper"
+        style={{ width: size.compareCanvas, height: size.compareCanvasHeight }}
+      >
+        {example ? (
+          <Image source={src} style={{ width: size.compareImage, height: size.compareImageHeight }} contentFit="cover" />
+        ) : (
+          <View className="rounded-10 bg-chip" style={{ width: size.compareImage, height: size.compareImageHeight }} />
+        )}
+      </View>
     </View>
   );
   return (
-    <View className="gap-24 pr-24">
-      <View className="gap-8">
-        <Text className="font-bold text-eyebrow text-secondaryText">SEE WHAT CHANGED</Text>
+    <View className="gap-24">
+      <View className="gap-6">
+        <Text className="font-semibold text-meta text-secondaryText">SEE WHAT CHANGED</Text>
         <Text className="font-bold text-heading text-ink">v2 → v3</Text>
       </View>
       <View className="flex-row gap-24">
         {card('Before · v2', asset.cafe2)}
         {card('After · v3', asset.cafe3)}
       </View>
-      <View className="gap-6 px-14">
+      <View className="gap-6 pt-16" style={{ width: size.reflectChangedText }}>
         <Text className="font-medium text-labelUi text-ink">What changed</Text>
-        <Text className="font-regular text-labelUi text-secondaryText">
+        <Text className="font-regular text-bodyUi text-secondaryText">
           Pickup stays the primary action. An outlined menu button keeps the second action easy to find.
         </Text>
       </View>

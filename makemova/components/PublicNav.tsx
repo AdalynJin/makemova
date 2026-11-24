@@ -9,7 +9,7 @@ import { Wordmark } from '@/components/Wordmark';
 import { useAuth } from '@/lib/auth';
 
 type Props = {
-  /** home: 81 tall, 16px links with Plans. account: 64 tall, used on sign in and create account. */
+  /** home: 81 tall, 15px links with Plans. account: 64 tall, used on sign in and create account. */
   variant?: 'home' | 'account';
   onSection?: (id: 'how' | 'example' | 'plans') => void;
 };
@@ -19,7 +19,7 @@ export function PublicNav({ variant = 'account', onSection }: Props) {
   const { session } = useAuth();
   const home = variant === 'home';
   const [guide, setGuide] = useState(false);
-  const link = home ? 'font-medium text-nav text-ink' : 'font-medium text-labelUi text-secondaryText';
+  const link = home ? 'font-medium text-action text-ink' : 'font-medium text-labelUi text-secondaryText';
   const go = (id: 'how' | 'example' | 'plans') => (onSection ? onSection(id) : router.push(`/#${id}` as never));
   return (
     <View
@@ -27,9 +27,9 @@ export function PublicNav({ variant = 'account', onSection }: Props) {
         home ? 'h-homeNavHeight' : 'h-navHeight'
       }`}
     >
-      <View className={`flex-row items-center ${home ? 'gap-40' : 'gap-24'}`}>
-        <Wordmark />
-        <View className={`flex-row items-center ${home ? 'gap-32' : 'gap-18'}`}>
+      <View className={`flex-row items-center ${home ? 'gap-56' : 'gap-24'}`}>
+        <Wordmark home={home} />
+        <View className={`flex-row items-center ${home ? 'gap-36' : 'gap-18'}`}>
           <Pressable accessibilityRole="link" onPress={() => go('how')}>
             <Text className={link}>How it works</Text>
           </Pressable>
@@ -43,28 +43,28 @@ export function PublicNav({ variant = 'account', onSection }: Props) {
           )}
         </View>
       </View>
-      <View className={`flex-row items-center ${home ? 'gap-24' : 'gap-20'}`}>
+      <View className={`flex-row items-center ${home ? 'gap-36' : 'gap-20'}`}>
         <Pressable accessibilityRole="button" onPress={() => setGuide(true)} className="flex-row items-center gap-6">
           <Icon name="help" />
-          <Text className={home ? 'font-medium text-nav text-ink' : 'font-medium text-labelUi text-secondaryText'}>
+          <Text className={link}>
             Quick guide
           </Text>
         </Pressable>
         {session ? (
           <Button
             label="My projects"
-            size={home ? 'lg' : 'sm'}
+            size={home ? 'nav' : 'sm'}
             arrow={home}
             onPress={() => router.push('/projects')}
           />
         ) : (
           <>
             <Pressable accessibilityRole="link" onPress={() => router.push('/sign-in')}>
-              <Text className={`font-semibold text-ink ${home ? 'text-nav' : 'text-labelUi'}`}>Sign in</Text>
+              <Text className={`text-ink ${home ? 'pr-8 font-bold text-action' : 'font-semibold text-labelUi'}`}>Sign in</Text>
             </Pressable>
             <Button
               label="Create account"
-              size={home ? 'lg' : 'sm'}
+              size={home ? 'nav' : 'sm'}
               arrow={home}
               onPress={() => router.push('/create-account')}
             />

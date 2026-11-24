@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
@@ -12,10 +11,11 @@ import { Sticker } from '@/components/Sticker';
 import { MovaToolCard, type Tool } from '@/components/MovaToolCard';
 import { ToolHoverPreview } from '@/components/ToolHoverPreview';
 import { TutorialsDialog } from '@/components/TutorialsDialog';
-import { asset, cardShadow, toolsShadow } from '@/lib/ui';
+import { cardShadow, toolsShadow } from '@/lib/ui';
 import { color, size, space } from '@/tokens';
 
-const surface = 'gap-16 rounded-24 border border-border bg-white p-16';
+const card = 'rounded-24 border border-border bg-white p-16';
+const surface = `gap-16 ${card}`;
 
 function Numbered({ n, label }: { n: number; label: string }) {
   return (
@@ -28,8 +28,12 @@ function Numbered({ n, label }: { n: number; label: string }) {
   );
 }
 
+function Radio() {
+  return <View className="h-radioChosen w-radioChosen rounded-pill border-radio border-ink bg-white" />;
+}
+
 function Caps({ children }: { children: string }) {
-  return <Text className="font-medium text-meta text-secondaryText">{children}</Text>;
+  return <Text className="font-semibold text-meta text-secondaryText">{children}</Text>;
 }
 
 /** Figma: CH02 · Brief panel — "The café brief". */
@@ -37,17 +41,17 @@ export function BriefPanel({ title, audience, goal }: { title: string; audience:
   return (
     <View>
       <Sticker crew="mateSetTheGoal" width={size.peekMateGoal} style={{ position: 'absolute', left: size.peekGoalLeft, bottom: '100%' }} />
-      <View className={`${surface} pb-40`} style={cardShadow}>
+      <View className={`${surface} pb-64`} style={cardShadow}>
         <Text className="font-bold text-briefTitle text-ink">{title}</Text>
-        <View className="gap-8">
+        <View className="gap-6">
           <Caps>AUDIENCE</Caps>
-          <View className="rounded-10 bg-paper px-12 py-10">
+          <View className="rounded-12 bg-paper px-12 py-12">
             <Text className="font-regular text-bodySmall text-ink">{audience}</Text>
           </View>
         </View>
-        <View className="gap-8">
+        <View className="gap-6">
           <Caps>GOAL</Caps>
-          <View className="rounded-10 bg-paper px-12 py-10">
+          <View className="rounded-12 bg-paper px-12 py-12">
             <Text className="font-regular text-bodySmall text-ink">{goal}</Text>
           </View>
         </View>
@@ -129,7 +133,7 @@ export function MakePanel({ version, onCritique, onCompare }: { version: string;
   );
 }
 
-const risks = ['The menu could be harder to find', 'Two dark buttons would compete', 'Students may miss the hours'];
+const risks = ['The menu may be harder to find.', 'Two dark buttons would compete.', 'Students may miss the hours.'];
 
 /** Figma: CH03 · Explain your choice (incomplete → complete). */
 export function ExplainPanel({
@@ -147,13 +151,13 @@ export function ExplainPanel({
     <View className={surface} style={cardShadow}>
       <Pressable accessibilityRole="link" onPress={onBack} className="flex-row items-center gap-6 self-start">
         <Icon name="arrowLeft" size={size.iconXs} />
-        <Text className="font-regular text-labelSmall text-secondaryText">Back to comparison</Text>
+        <Text className="font-medium text-labelSmall text-secondaryText">Back to comparison</Text>
       </Pressable>
       <Text className="font-bold text-heading text-ink">Explain your choice</Text>
       <View className="gap-8">
         <View className="flex-row justify-between">
-          <Text className="font-medium text-meta text-ink">{done} of 3 done</Text>
-          <Text className="font-regular text-meta text-secondaryText">{tradeOff ? 'Ready to save' : 'Trade-off missing'}</Text>
+          <Text className="font-medium text-labelSmall text-ink">{done} of 3 done</Text>
+          <Text className="font-medium text-labelSmall text-secondaryText">{tradeOff ? 'Ready to save' : 'Trade-off missing'}</Text>
         </View>
         <View className="flex-row gap-4">
           {[0, 1, 2].map((i) => (
@@ -167,10 +171,8 @@ export function ExplainPanel({
       ].map(([label, answer], i) => (
         <View key={label} className="gap-8">
           <Numbered n={i + 1} label={label} />
-          <View className="min-h-control flex-row items-center gap-12 rounded-10 border-dash border-ink px-12">
-            <View className="h-radioOuter w-radioOuter items-center justify-center rounded-pill border-focus border-ink">
-              <View className="h-radioInner w-radioInner rounded-pill bg-ink" />
-            </View>
+          <View className="flex-row items-center gap-12 rounded-10 border-dash border-ink bg-paper px-16 py-12">
+            <Radio />
             <Text className="font-medium text-labelUi text-ink">{answer}</Text>
           </View>
         </View>
@@ -180,14 +182,15 @@ export function ExplainPanel({
         <Pressable
           accessibilityRole="button"
           onPress={() => setOpen(!open)}
-          className={`min-h-control flex-row items-center justify-between rounded-10 px-12 ${
-            tradeOff ? 'border-dash border-ink' : 'border border-dashed border-secondaryText'
+          className={`flex-row items-center gap-12 rounded-10 px-16 py-12 ${
+            tradeOff ? 'border-dash border-ink bg-paper' : 'border border-dashed border-secondaryText'
           }`}
         >
-          <Text className={tradeOff ? 'font-medium text-labelUi text-ink' : 'font-regular text-labelUi text-secondaryText'}>
+          {tradeOff && <Radio />}
+          <Text className={tradeOff ? 'font-medium text-labelUi text-ink' : 'flex-1 font-regular text-bodyUi text-secondaryText'}>
             {tradeOff ?? 'Choose a risk you will check'}
           </Text>
-          <Icon name="chevronDown" />
+          {!tradeOff && <Icon name="chevronDown" />}
         </Pressable>
         {open && (
           <View className="overflow-hidden rounded-10 border border-border bg-white">
@@ -211,8 +214,8 @@ export function ExplainPanel({
       <View className="border-t border-border" />
       <View className="flex-row items-center gap-6">
         <Icon name="helpSmall" />
-        <Text className="font-regular text-labelSmall text-secondaryText">
-          {tradeOff ? 'Saved with your choice · free' : 'Add a trade-off to save · free'}
+        <Text className="font-regular text-bodySmall text-secondaryText">
+          {tradeOff ? 'Saving is free. Find this in your critique notes.' : 'Add a trade-off to save · free'}
         </Text>
       </View>
     </View>
@@ -226,85 +229,86 @@ export function RevisePanel() {
   );
   return (
     <View className={surface} style={cardShadow}>
-      <View className="gap-6 pr-64">
+      <Motion name="revise" width={size.motionRevise} style={{ position: 'absolute', right: space[14], top: 0 }} />
+      <View className="gap-10">
         <Text className="font-bold text-heading text-ink">Revise one thing</Text>
-        <Text className="font-regular text-labelUi text-secondaryText">Keep pickup strong and make the menu easier to find.</Text>
-        <Motion name="revise" width={size.motionRevise} style={{ position: 'absolute', right: -space[8], top: -space[8] }} />
+        <Text className="font-regular text-bodyUi text-secondaryText">Keep pickup prominent and make the menu easier to find.</Text>
       </View>
-      <View className="flex-row items-center gap-10">
+      <View className="flex-row items-center gap-12">
         <Caps>STARTING VERSION</Caps>
-        <Text className="font-semibold text-labelUi text-ink">v2 · Current</Text>
+        <Text className="font-medium text-labelUi text-ink">v2 · Current</Text>
       </View>
-      <View className="gap-8">
+      <View className="gap-12">
         <Numbered n={1} label="Edit source" />
         <View className="self-start">
-          <Button label="Open source file" variant="white" size="sm" leading="edit" />
+          <Button label="Open source file" variant="secondary" size="sm" leading="edit" />
         </View>
       </View>
-      <View className="gap-8">
+      <View className="gap-12">
         <Numbered n={2} label="Upload revision" />
-        <View className="flex-row items-center gap-12 rounded-10 bg-paper p-12">
-          <View className="h-fileIcon w-fileIcon rounded-6 bg-border" />
-          <View className="flex-1">
-            <Text className="font-medium text-labelSmall text-ink">cafe-revision.png</Text>
-            <Text className="font-regular text-meta text-secondaryText">PNG · 1.2 MB</Text>
+        <View className="flex-row items-center gap-12 rounded-10 bg-paper px-12 py-10">
+          <View className="h-fileIcon w-fileIcon items-center justify-center rounded-6 bg-border">
+            <Icon name="image" size={size.iconXs} />
           </View>
-          <Text className="font-medium text-meta text-secondaryText">Replace</Text>
+          <View className="flex-1 gap-2">
+            <Text className="font-medium text-labelSmall text-ink">cafe-revision.png</Text>
+            <Text className="font-regular text-bodySmall text-secondaryText">PNG · 1.2 MB</Text>
+          </View>
+          <Text className="font-medium text-labelSmall text-secondaryText">Replace</Text>
         </View>
       </View>
-      <View className="gap-8">
+      <View className="gap-12">
         <Numbered n={3} label="Note the change" />
         <TextInput
           multiline
           value={note}
           onChangeText={setNote}
           placeholderTextColor={color.secondaryText}
-          className="min-h-control rounded-12 border border-secondaryText px-12 py-10 font-regular text-labelUi text-ink"
+          className="min-h-control rounded-12 border border-secondaryText px-14 py-10 font-regular text-bodyUi text-ink"
           style={{ outlineStyle: 'none' } as never}
         />
       </View>
-      <View className="flex-row gap-8">
+      <View className="flex-row gap-12">
         <View className="flex-1">
-          <Button label="Revision tips" variant="white" size="sm" full />
+          <Button label="Revision tips" variant="ash" size="sm" full />
         </View>
         <View className="flex-1">
-          <Button label="Why this version?" variant="white" size="sm" full />
+          <Button label="Why this version?" variant="ash" size="sm" full />
         </View>
       </View>
     </View>
   );
 }
 
-/** Figma: CH05 · Reflect — Keep one useful lesson. */
+/** Figma: CH08 · Reflect — What I learned. */
 export function ReflectPanel({ onBack, onFinish }: { onBack: () => void; onFinish: () => void }) {
-  const [lesson, setLesson] = useState(
-    'Give one action the most contrast; make the second one quieter, not hidden.',
-  );
+  const [lesson, setLesson] = useState('Make the main button stand out and keep the second one quieter.');
   return (
     <View>
       <Motion
         name="reflect"
         width={size.motionReflect}
-        style={{ position: 'absolute', right: space[64], top: -size.motionReflectHeight + space[28], zIndex: 1 }}
+        style={{ position: 'absolute', left: size.reflectMotionLeft, top: size.reflectMotionTop, zIndex: 1 }}
       />
-      <View className={surface} style={cardShadow}>
-        <Text className="font-bold text-heading text-ink">Keep one useful lesson</Text>
+      <View className={`gap-10 ${card}`} style={cardShadow}>
+        <Text className="font-bold text-heading text-ink">What I learned</Text>
         <View className="gap-8">
           <Text className="font-medium text-labelUi text-ink">What will you carry forward?</Text>
           <TextInput
             multiline
+            numberOfLines={1}
             value={lesson}
             onChangeText={setLesson}
-            className="min-h-control rounded-12 border border-secondaryText px-12 py-10 font-regular text-labelUi text-ink"
+            className="min-h-control rounded-12 border border-secondaryText px-14 py-10 font-regular text-bodyUi text-ink"
             style={{ outlineStyle: 'none' } as never}
           />
         </View>
         <Button label="Open crit notes" variant="quiet" size="sm" />
         <View className="border-t border-border" />
-        <Button label="Back to workspace" variant="quiet" size="sm" onPress={onBack} />
+        <Button label="Back to workspace" variant="quiet" size="md" onPress={onBack} />
         <Pressable accessibilityRole="link" onPress={onFinish} className="flex-row items-center gap-6">
           <Icon name="arrowLeft" size={size.iconXs} />
-          <Text className="font-regular text-labelSmall text-secondaryText">Finish returns to My projects</Text>
+          <Text className="font-regular text-bodySmall text-secondaryText">Finish returns to My projects</Text>
         </Pressable>
       </View>
     </View>
