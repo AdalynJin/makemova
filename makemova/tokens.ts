@@ -600,6 +600,29 @@ export const size = {
   // R5 · Choose left / right version (11125:60079, 60104)
   versionIcon: 24,
   versionView: 144,
+  // Prototype flow sync (Refined 11085:17520): the workspace is the 1440 frame, centred in wider windows.
+  versionThumb: 56, // Own project · Saved versions row thumbnail, version hover preview
+  versionThumbHeight: 40,
+  versionHoverPreview: 216, // Version · Select thumbnail (R9 · Versions sidebar)
+  versionHoverPreviewHeight: 138,
+  portraitMaxHeight: 640, // a tall screen (phone UI) is shown whole, at most this tall
+  compareSlotHeight: 364, // Own project · Add a comparison version (11125:44606)
+  addVersionMark: 40, // the round plus in the empty B slot
+  feedbackPin: 32, // Makemova / Feedback pin / Versa (11125:65033)
+  feedbackPinCard: 240,
+  feedbackPin1Left: 243, // Feedback 1 · vN at 403,486 on a 1088 × 694 artwork drawn at 160,152
+  feedbackPin2Left: 442, // Feedback 2 · vN at 602,486
+  feedbackPinTop: 334,
+  critiqueToast: 314, // Critique saved · Status cue (11125:42048)
+  critiqueToastRight: 36,
+  critiqueToastBottom: 16,
+  dialogTutorial: 640, // R5 · Tutorial · Make the main action stand out (11125:60346)
+  dialogRecord: 512, // R6 · Saved record (11125:60310), R6 · Saved decision (11125:60284)
+  dialogSummary: 600, // R4 · Dialog · Project summary (11125:60402)
+  decisionPanel: 448, // Own project · Context panel · Explain your choice
+  chosenVersion: 792, // Own project · Chosen vN (11125:44606)
+  chosenVersionHeight: 510,
+  reflectField: 64, // What I learned answers
 } as const;
 
 /**

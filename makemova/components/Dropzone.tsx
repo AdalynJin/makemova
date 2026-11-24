@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 
-import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
 
 type Props = {
@@ -48,7 +47,10 @@ export function Dropzone({ title = 'Drop your work here', hint = 'PNG or JPG · 
       </View>
       <Text className="font-medium text-labelUi text-ink">{title}</Text>
       <Text className="font-regular text-bodySmall text-secondaryText">{hint}</Text>
-      <Button label="Choose file" variant="white" size="sm" onPress={onChoose} />
+      {/* Drawn like Button · white S. The whole zone is the button, so this is not a second, nested one. */}
+      <View className="h-controlSmall items-center justify-center rounded-pill border border-ink bg-white px-16">
+        <Text className="font-semibold text-labelUi text-ink">Choose file</Text>
+      </View>
     </Pressable>
   );
 }
