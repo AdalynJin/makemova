@@ -21,6 +21,7 @@ import { Icon } from '@/components/Icon';
 import { ProjectSummary } from '@/components/ProjectSummary';
 import { ReviewScreen } from '@/components/ReviewScreen';
 import { SavedRecord, type Record as CritRecord } from '@/components/SavedRecord';
+import { StatusNotice } from '@/components/StatusNotice';
 import { SavedVersionsDialog } from '@/components/SavedVersionsDialog';
 import { ScreenshotReady } from '@/components/ScreenshotReady';
 import { StageNav, type Stage } from '@/components/StageNav';
@@ -39,6 +40,7 @@ import {
   type RevisionFile,
 } from '@/components/WorkspacePanels';
 import { useAuth } from '@/lib/auth';
+import { loadCritiques, requestCritique, type CritiquePin } from '@/lib/critique';
 import { credits } from '@/lib/credits';
 import { supabase } from '@/lib/supabase';
 import { asset } from '@/lib/ui';
@@ -58,7 +60,7 @@ import { color, size } from '@/tokens';
 type MakeView = 'work' | 'compare' | 'decision' | 'direction';
 
 /** A saved screen. Café screens are bundled; a real project's come from storage as signed URLs. */
-type Version = { number: number; name: string; file: string; source: ImageSource | number | null };
+type Version = { number: number; name: string; file: string; source: ImageSource | number | null; id?: string };
 type Workspace = {
   title: string;
   audience: string;
@@ -152,6 +154,9 @@ export default function ProjectWorkspace() {
   const [balance, setBalance] = useState<number>(credits.remaining);
   const [critiqued, setCritiqued] = useState<number[]>([]);
   const [critiqueToast, setCritiqueToast] = useState(false);
+  // Own project: Claude's pins per version number, and the request in flight or the one that failed.
+  const [aiPins, setAiPins] = useState<Record<number, CritiquePin[]>>({});
+  const [critiqueRun, setCritiqueRun] = useState<{ state: 'running' } | { state: 'error'; message: string; focus: CritiqueFocus } | null>(null);
 
   // Compare: A is the current version; B starts empty (own work) or as v2 (café).
   const [pairA, setPairA] = useState(1);
@@ -187,13 +192,13 @@ export default function ProjectWorkspace() {
     setLoad({ status: 'loading' });
     const { data, error } = await supabase
       .from('projects')
-      .select('title, project_contexts(goal, audience), artifact_versions(version_number, file_ref)')
+      .select('title, project_contexts(goal, audience), artifact_versions(id, version_number, file_ref)')
       .eq('id', id)
       .maybeSingle();
     if (error) return setLoad({ status: 'error', message: error.message });
     if (!data) return setLoad({ status: 'error', message: 'This project was not found.' });
     const ctx = Array.isArray(data.project_contexts) ? data.project_contexts[0] : data.project_contexts;
-    const rows = [...((data.artifact_versions ?? []) as { version_number: number; file_ref: string | null }[])].sort(
+    const rows = [...((data.artifact_versions ?? []) as { id: string; version_number: number; file_ref: string | null }[])].sort(
       (a, b) => a.version_number - b.version_number,
     );
     const paths = rows.map((r) => r.file_ref).filter((p): p is string => !!p);
@@ -208,8 +213,15 @@ export default function ProjectWorkspace() {
         name: `v${r.version_number}`,
         file: r.file_ref?.split('/').at(-1) ?? '',
         source: uri ? { uri } : null,
+        id: r.id,
       };
     });
+    // Saved critiques come back as feedback pins on their versions.
+    const saved = await loadCritiques(id);
+    const pins: Record<number, CritiquePin[]> = {};
+    for (const v of versions) if (v.id && saved[v.id]) pins[v.number] = saved[v.id].pins;
+    setAiPins(pins);
+    setCritiqued(Object.keys(pins).map(Number));
     const last = versions.at(-1)?.number ?? 1;
     setVersion(last);
     setPairA(last);
@@ -241,6 +253,32 @@ export default function ProjectWorkspace() {
     if (example) {
       // Revise shows the saved revision; Reflect compares the chosen version (v2 by default) with v3.
       setVersion(next === 'reflect' ? (chosen ?? cafeAt.reflect.current) : next === 'make' ? cafeHas : cafeAt[next].current);
+    }
+  }
+
+  /** Café: Use 5 credits saves the sample pins right away. */
+  function critiqueExample() {
+    setBalance((b) => b - 5);
+    setCritiqued((c) => (c.includes(version) ? c : [...c, version]));
+    setPanelOpen(false);
+    setCritiqueToast(true);
+  }
+
+  /** Own project: Claude looks at this version. Credits are used only when the critique comes back. */
+  async function critiqueOwn(focus: CritiqueFocus) {
+    const v = version;
+    setPanelOpen(false);
+    setCritiqueToast(false);
+    setCritiqueRun({ state: 'running' });
+    try {
+      const result = await requestCritique(id, v, focus);
+      setAiPins((p) => ({ ...p, [v]: result.pins }));
+      setCritiqued((c) => (c.includes(v) ? c : [...c, v]));
+      setBalance((b) => b - 5);
+      setCritiqueRun(null);
+      setCritiqueToast(true);
+    } catch (e) {
+      setCritiqueRun({ state: 'error', message: (e as Error).message, focus });
     }
   }
 
@@ -467,6 +505,20 @@ export default function ProjectWorkspace() {
       {v?.source ? (
         <VersionPreview source={v.source} label={v.name} maxWidth={size.artworkImage} maxHeight={size.artworkImageHeight}>
           {critiqued.includes(v.number) &&
+            !ws.example &&
+            aiPins[v.number]?.map((p, i) => (
+              <FeedbackPin
+                key={`${v.number}-${i}`}
+                number={i + 1}
+                title={p.title}
+                body={p.body}
+                side={p.x > 0.5 ? 'left' : 'right'}
+                left={`${p.x * 100}%`}
+                top={`${p.y * 100}%`}
+              />
+            ))}
+          {critiqued.includes(v.number) &&
+            (ws.example || !aiPins[v.number]) &&
             PINS[kind].map((p, i) => (
               <FeedbackPin
                 key={p.title}
@@ -705,13 +757,7 @@ export default function ProjectWorkspace() {
                   <MakePanel
                     version={shown?.name ?? `v${version}`}
                     balance={balance}
-                    onCritique={(focus: CritiqueFocus) => {
-                      void focus;
-                      setBalance((b) => b - 5);
-                      setCritiqued((c) => (c.includes(version) ? c : [...c, version]));
-                      setPanelOpen(false);
-                      setCritiqueToast(true);
-                    }}
+                    onCritique={(focus: CritiqueFocus) => (ws.example ? critiqueExample() : critiqueOwn(focus))}
                     onCompare={compare}
                     onGuidelines={() => openDialog('guidelines')}
                     onPlans={() => router.push('/account/plans')}
@@ -794,6 +840,22 @@ export default function ProjectWorkspace() {
       </ScrollView>
 
       {critiqueToast && <CritiqueSaved onClose={() => setCritiqueToast(false)} />}
+      {critiqueRun && (
+        <View
+          className="w-critiqueToast"
+          style={{ position: 'absolute', right: size.critiqueToastRight, bottom: size.critiqueToastBottom, zIndex: 4 }}
+        >
+          {critiqueRun.state === 'running' ? (
+            <StatusNotice state="running" actionLabel="Hide" onAction={() => setCritiqueRun(null)} />
+          ) : (
+            <StatusNotice
+              state="error"
+              body={`${critiqueRun.message} 0 credits used.`}
+              onAction={() => critiqueOwn(critiqueRun.focus)}
+            />
+          )}
+        </View>
+      )}
 
       {/* Edit menu · Click outside to close: covers the workspace below the header. */}
       {editOpen && (
