@@ -15,6 +15,7 @@ import { CritiqueSaved } from '@/components/CritiqueSaved';
 import { EditDropdown } from '@/components/EditDropdown';
 import { EditSourceDialog } from '@/components/EditSourceDialog';
 import { FeedbackPin } from '@/components/FeedbackPin';
+import { NextAction } from '@/components/NextAction';
 import { GuidanceDialog } from '@/components/GuidanceDialog';
 import { Icon } from '@/components/Icon';
 import { ProjectSummary } from '@/components/ProjectSummary';
@@ -25,6 +26,7 @@ import { ScreenshotReady } from '@/components/ScreenshotReady';
 import { StageNav, type Stage } from '@/components/StageNav';
 import { VersionPreview } from '@/components/VersionPreview';
 import {
+  AddDirectionPanel,
   BriefPanel,
   CAFE_EXPLAIN,
   ExplainPanel,
@@ -53,7 +55,7 @@ import {
 import { color, size } from '@/tokens';
 
 /** Inside Make: the tools on the work, the comparison, or the chosen version with Explain your choice. */
-type MakeView = 'work' | 'compare' | 'decision';
+type MakeView = 'work' | 'compare' | 'decision' | 'direction';
 
 /** A saved screen. Café screens are bundled; a real project's come from storage as signed URLs. */
 type Version = { number: number; name: string; file: string; source: ImageSource | number | null };
@@ -88,12 +90,13 @@ const EXAMPLE_COPY = {
   guideline: 'Make pickup the first thing students see.',
   constant: 'Students, menu items, prices, photo and viewport.',
   revise: 'Keep pickup prominent and make the menu easier to find.',
+  direction: 'Give pickup more emphasis: a filled "Order pickup" and a hero that says what you get. Keep the menu link.',
 };
 
 /** How many café versions exist at each stage, and which one is selected on arrival (Flow A frames). */
 const cafeAt: Record<Stage, { count: number; current: number }> = {
   brief: { count: 1, current: 1 },
-  make: { count: 2, current: 2 },
+  make: { count: 1, current: 1 }, // v1 only; v2 arrives through Try another direction
   revise: { count: 3, current: 3 },
   reflect: { count: 3, current: 2 },
 };
@@ -154,6 +157,8 @@ export default function ProjectWorkspace() {
   const [pairA, setPairA] = useState(1);
   const [pairB, setPairB] = useState<number | null>(null);
   const [changing, setChanging] = useState<'A' | 'B'>('B');
+  // Café versions unlocked in Make: v1 at first, v2 once the designer adds it (Make · Add direction).
+  const [cafeHas, setCafeHas] = useState(1);
   // Café screenshots added during this visit (the example itself is read-only).
   const [local, setLocal] = useState<Version[]>([]);
 
@@ -235,7 +240,7 @@ export default function ProjectWorkspace() {
     setCritiqueToast(false);
     if (example) {
       // Revise shows the saved revision; Reflect compares the chosen version (v2 by default) with v3.
-      setVersion(next === 'reflect' ? (chosen ?? cafeAt.reflect.current) : cafeAt[next].current);
+      setVersion(next === 'reflect' ? (chosen ?? cafeAt.reflect.current) : next === 'make' ? cafeHas : cafeAt[next].current);
     }
   }
 
@@ -245,11 +250,18 @@ export default function ProjectWorkspace() {
     setCritiqueToast(false);
     if (!example && load.status === 'ready' && load.ws.versions.length === 0) return openDialog('add', 'version');
     setStep('make');
+    // Only one version: Compare has nothing to compare yet, so it opens Make · Add direction first.
+    const count = example ? cafeHas + local.length : load.status === 'ready' ? load.ws.versions.length : 0;
+    if (count < 2) {
+      setView('direction');
+      setPanelOpen(true);
+      return;
+    }
     setView('compare');
     if (chosen === null) {
       if (example) {
         setPairA(1);
-        setPairB(2);
+        setPairB(cafeHas >= 2 ? 2 : (local[0]?.number ?? null));
       } else {
         setPairA(version);
         setPairB(null);
@@ -299,7 +311,9 @@ export default function ProjectWorkspace() {
     if (!work || load.status !== 'ready') return null;
     const { ws } = load;
     const all = [...ws.versions, ...local];
-    const next = Math.max(0, ...all.map((v) => v.number)) + 1;
+    // Café: a screenshot added in Make takes the next number after what the designer can see (v2 after v1).
+    const seen = ws.example ? [...CAFE.slice(0, cafeHas), ...local] : all;
+    const next = Math.max(0, ...seen.map((v) => v.number)) + 1;
     if (ws.example) {
       const uri = URL.createObjectURL(work.file);
       setLocal((l) => [...l, { number: next, name: `v${next} · Your screenshot`, file: work.name, source: { uri } }]);
@@ -377,15 +391,18 @@ export default function ProjectWorkspace() {
   }
 
   const { ws } = load;
-  const all: Version[] = [...ws.versions, ...local];
+  // A café screenshot the designer added replaces the sample with the same number.
+  const own = (list: Version[]) => list.filter((v) => !local.some((l) => l.number === v.number));
+  const all: Version[] = [...own(ws.versions), ...local];
   const listed: Version[] = ws.example
-    ? [...CAFE.slice(0, cafeAt[step].count), ...local]
+    ? [...own(CAFE.slice(0, step === 'brief' ? 1 : step === 'make' ? cafeHas : cafeAt[step].count)), ...local].sort((a, b) => a.number - b.number)
     : all;
   const shown = all.find((v) => v.number === version) ?? null;
   const hasScreen = all.length > 0;
+  const makeCount = ws.example ? cafeHas + local.length : all.length;
   const kind = ws.example ? 'cafe' : 'own';
 
-  const compareVersions: CompareVersion[] = (ws.example ? [...CAFE.slice(0, 2), ...local] : all).map((v) => ({
+  const compareVersions: CompareVersion[] = (ws.example ? [...CAFE.slice(0, cafeHas), ...local] : all).map((v) => ({
     number: v.number,
     name: v.name,
     file: v.file,
@@ -504,6 +521,19 @@ export default function ProjectWorkspace() {
           )}
         </View>
       </View>
+
+      {/* Next action · Fixed footer: what to do next in Make. */}
+      {step === 'make' && view === 'work' && hasScreen && (
+        <NextAction
+          state={makeCount >= 2 ? 'compare' : critiqued.includes(version) ? 'savedCritique' : 'addDirection'}
+          onPress={() => {
+            if (makeCount >= 2) return compare();
+            setCritiqueToast(false);
+            setView('direction');
+            setPanelOpen(true);
+          }}
+        />
+      )}
 
       <ScrollView className="flex-1" contentContainerClassName="items-center">
         {/* The 1440 frame, centred: the work sits in the middle of the window, as in every Figma frame. */}
@@ -665,7 +695,7 @@ export default function ProjectWorkspace() {
                       }
                     : ownDecision
                       ? { right: 0, top: 0, width: size.decisionPanel }
-                      : { right: 0, top: size.panelTop, width: step === 'make' && view === 'work' ? size.panelMake : size.panel },
+                      : { right: 0, top: size.panelTop, width: step === 'make' && (view === 'work' || view === 'direction') ? size.panelMake : size.panel },
                 ]}
               >
                 {step === 'brief' && (
@@ -685,6 +715,25 @@ export default function ProjectWorkspace() {
                     onCompare={compare}
                     onGuidelines={() => openDialog('guidelines')}
                     onPlans={() => router.push('/account/plans')}
+                  />
+                )}
+                {step === 'make' && view === 'direction' && (
+                  <AddDirectionPanel
+                    example={ws.example}
+                    next={ws.example ? 2 : Math.max(0, ...all.map((v) => v.number)) + 1}
+                    change={ws.example ? EXAMPLE_COPY.direction : `Change one thing toward your goal: ${ws.goal}`}
+                    constant={ws.example ? EXAMPLE_COPY.constant : 'Same audience, content, images and screen size.'}
+                    onSample={() => {
+                      setCafeHas(2);
+                      setVersion(2);
+                      setView('work');
+                      setPanelOpen(true);
+                    }}
+                    onUpload={() => openDialog('add', 'version')}
+                    onBack={() => {
+                      setView('work');
+                      setPanelOpen(true);
+                    }}
                   />
                 )}
                 {step === 'make' && view === 'decision' && ws.example && (

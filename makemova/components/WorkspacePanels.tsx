@@ -603,3 +603,65 @@ export function ReflectPanel({
     </View>
   );
 }
+
+/**
+ * Figma: Flow B · CH03 · Make · Add direction (11125:44118) · Context panel · Expanded.
+ * Reached from "Add another direction" (Make · Tools footer), "Try another direction" (after a critique)
+ * and Compare while only one version exists. Prototype: "Add v2 screenshot" → Make · v2 current;
+ * "Back to Make" → Make · Tools. The café template already has a v2 to try, so it offers that first.
+ */
+export function AddDirectionPanel({
+  example,
+  next,
+  change,
+  constant,
+  onSample,
+  onUpload,
+  onBack,
+}: {
+  example: boolean;
+  /** The version this direction becomes, e.g. 2. */
+  next: number;
+  change: string;
+  constant: string;
+  onSample: () => void;
+  onUpload: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <View className={surface} style={cardShadow}>
+      <Pressable accessibilityRole="button" onPress={onBack} className="flex-row items-center gap-6 self-start">
+        <Icon name="arrowLeft" size={size.iconSmall} />
+        <Text className="font-regular text-labelSmall text-secondaryText">Back to Make</Text>
+      </Pressable>
+      <Text className="font-bold text-briefTitle text-ink">Try another direction.</Text>
+      <Text className="font-regular text-bodySmall text-secondaryText">
+        To compare, you need a second version. Change one thing, keep the rest the same, then add it as v{next}.
+      </Text>
+      <View className="gap-6">
+        <Caps>ONE CHANGE TO TRY</Caps>
+        <View className="rounded-12 bg-paper px-12 py-12">
+          <Text className="font-regular text-bodySmall text-ink">{change}</Text>
+        </View>
+      </View>
+      <View className="gap-6">
+        <Caps>KEEP CONSTANT</Caps>
+        <View className="rounded-12 bg-paper px-12 py-12">
+          <Text className="font-regular text-bodySmall text-ink">{constant}</Text>
+        </View>
+      </View>
+      <Text className="font-regular text-bodySmall text-secondaryText">Edit in your design tool, then add an export.</Text>
+      <View className="gap-8">
+        {example && <Button label={`Use the café's v${next}`} size="sm" full onPress={onSample} />}
+        <Button
+          label={example ? 'Upload my own screenshot' : `Add v${next} screenshot`}
+          variant={example ? 'secondary' : 'primary'}
+          size="sm"
+          full
+          leading={example ? 'upload' : 'uploadWhite'}
+          onPress={onUpload}
+        />
+      </View>
+    </View>
+  );
+}
